@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VKP MOM — Configure & Download</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#001a26,#005f73);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:20px;padding:40px;width:560px;max-width:100%;box-shadow:0 24px 80px rgba(0,10,20,.5)}
+.logo{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.logo-mark{width:48px;height:48px;background:linear-gradient(135deg,#c9a84c,#e8d5a3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#002d3d}
+.title{font-size:22px;font-weight:700;color:#002d3d}
+.subtitle{font-size:11px;color:#64748b;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+h2{font-size:15px;color:#005f73;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e2edf0}
+.field{margin-bottom:16px}
+label{display:block;font-size:11px;font-weight:700;color:#005f73;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+input,textarea{width:100%;padding:11px 14px;border:1.5px solid #d0e4ea;border-radius:10px;font-size:13px;color:#1a2a33;background:#f8fbfc;outline:none;transition:all .16s;font-family:monospace}
+input:focus,textarea:focus{border-color:#0a9396;background:#fff;box-shadow:0 0 0 3px rgba(10,147,150,.1)}
+textarea{resize:vertical;min-height:80px;font-size:11px}
+.hint{font-size:11.5px;color:#64748b;margin-top:5px;line-height:1.5}
+.hint a{color:#0a9396}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,#001a26,#005f73,#0a9396);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s;margin-top:8px;letter-spacing:.03em}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.success{display:none;margin-top:16px;padding:14px 18px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;color:#166534;font-size:13px;line-height:1.6}
+.step{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:#f0f8fa;border-radius:8px;border:1px solid #d0e8ed;margin-bottom:10px;font-size:12.5px;color:#1a2a33;line-height:1.5}
+.step-num{width:22px;height:22px;background:#0a9396;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.where{background:#f8fbfc;border:1px solid #e2edf0;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#64748b;line-height:1.6}
+.where strong{color:#005f73}
+.err{display:none;padding:10px 14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;color:#b91c1c;font-size:12.5px;margin-top:8px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">VKP</div>
+    <div>
+      <div class="title">Configure & Download</div>
+      <div class="subtitle">VKP Director MOM System Setup</div>
+    </div>
+  </div>
+
+  <h2>Where to find your values</h2>
+  <div class="where">
+    Go to <strong>supabase.com</strong> → your project → <strong>Settings</strong> (gear icon) → <strong>API</strong><br>
+    • <strong>Project URL</strong> — looks like <code>https://abcxyz.supabase.co</code><br>
+    • <strong>Anon Key</strong> — the long key under "Project API Keys" → <em>anon public</em>
+  </div>
+
+  <div class="field">
+    <label>Supabase Project URL</label>
+    <input type="url" id="url" placeholder="https://psgfuqekmdcvtazaohkw.supabase.co" oninput="validate()">
+    <div class="hint">Copy exactly from Supabase → Settings → API → Project URL</div>
+  </div>
+
+  <div class="field">
+    <label>Supabase Anon Key</label>
+    <textarea id="key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="validate()" rows="3"></textarea>
+    <div class="hint">Copy the <strong>anon / public</strong> key (starts with eyJ…). Do NOT use the service_role key.</div>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <button class="btn" id="btn" onclick="generate()" disabled>
+    ⬇ Generate Configured App File
+  </button>
+
+  <div class="success" id="success">
+    <strong>✓ File downloaded!</strong><br>
+    Now upload <strong>VKP_MOM_App_Configured.html</strong> to your hosting.<br>
+    That's it — open it in browser and sign in.
+  </div>
+
+  <div style="margin-top:24px;border-top:1px solid #e2edf0;padding-top:16px">
+    <div style="font-size:12px;font-weight:600;color:#005f73;margin-bottom:10px">After uploading, also do this in Supabase:</div>
+    <div class="step"><div class="step-num">1</div>Go to Authentication → URL Configuration → set Site URL to your domain</div>
+    <div class="step"><div class="step-num">2</div>Add your domain to Redirect URLs (e.g. https://yourdomain.com)</div>
+    <div class="step"><div class="step-num">3</div>Sign in → then in Supabase SQL Editor make yourself admin:<br><code style="font-size:10.5px;background:#f0f8fa;padding:2px 6px;border-radius:4px">update public.profiles set role='admin' where id=(select id from auth.users where email='your@email.com');</code></div>
+  </div>
+</div>
+
+<script>
+function validate() {
+  const url = document.getElementById('url').value.trim();
+  const key = document.getElementById('key').value.trim();
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+
+  let ok = true;
+  if (url && !url.startsWith('https://')) { err.textContent = '✗ URL must start with https://'; err.style.display = 'block'; ok = false; }
+  if (url && !url.includes('.supabase.co')) { err.textContent = '✗ URL must end with .supabase.co'; err.style.display = 'block'; ok = false; }
+  if (key && !key.startsWith('eyJ')) { err.textContent = '✗ Anon key should start with eyJ — check you copied the right key'; err.style.display = 'block'; ok = false; }
+  if (url.includes('YOUR_PROJECT_ID')) { err.textContent = '✗ Still has placeholder — paste your actual Supabase URL'; err.style.display = 'block'; ok = false; }
+
+  btn.disabled = !(url.length > 10 && key.length > 20 && ok);
+}
+
+async function generate() {
+  const url = document.getElementById('url').value.trim();
+  const key = document.getElementById('key').value.trim();
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Fetching app file…';
+
+  try {
+    // Fetch the template file from same directory
+    const resp = await fetch('VKP_MOM_App.html');
+    if (!resp.ok) throw new Error('Could not load VKP_MOM_App.html — make sure both files are in the same folder on your server.');
+    let html = await resp.text();
+
+    // Replace placeholders
+    if (!html.includes('YOUR_PROJECT_ID') && !html.includes('YOUR_ANON_KEY_HERE')) {
+      err.textContent = '⚠ The template file already has values configured. It may already be set up correctly.';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = '⬇ Generate Configured App File';
+      return;
+    }
+
+    html = html.replace(/https:\/\/YOUR_PROJECT_ID\.supabase\.co/g, url);
+    html = html.replace(/YOUR_ANON_KEY_HERE/g, key);
+
+    if (html.includes('YOUR_PROJECT_ID') || html.includes('YOUR_ANON_KEY_HERE')) {
+      throw new Error('Replacement failed — placeholder still found. Try again.');
+    }
+
+    // Download
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'VKP_MOM_App_Configured.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    document.getElementById('success').style.display = 'block';
+    btn.textContent = '✓ Downloaded! Upload VKP_MOM_App_Configured.html to your server';
+  } catch(e) {
+    err.textContent = '✗ ' + e.message;
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '⬇ Generate Configured App File';
+  }
+}
+</script>
+</body>
+</html>
