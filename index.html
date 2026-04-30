@@ -765,7 +765,7 @@ const MONTHS = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',a
 // ═══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', async () => {
   // Show helpful config check first
-  if (SUPABASE_URL.includes('YOUR_PROJECT_ID') || SUPABASE_ANON_KEY.includes('YOUR_ANON_KEY')) {
+  if (SUPABASE_URL.includes('https://psgfuqekmdcvtazaohkw.supabase.co') || SUPABASE_ANON_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZ2Z1cWVrbWRjdnRhemFvaGt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM3MzgsImV4cCI6MjA5MzExOTczOH0.Jt2GHxcuQ_z224u9aXK_JUcCY-QOCkxnceYRMOteDfw')) {
     document.getElementById('loading-overlay').style.display = 'none';
     document.getElementById('login-page').style.display = 'flex';
     showLoginError('⚙ Not configured. Replace SUPABASE_URL and SUPABASE_ANON_KEY in the file.');
