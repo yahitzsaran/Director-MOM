@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VKP Director MOM System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+const SUPABASE_URL = 'https://psgfuqekmdcvtazaohkw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZ2Z1cWVrbWRjdnRhemFvaGt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM3MzgsImV4cCI6MjA5MzExOTczOH0.Jt2GHxcuQ_z224u9aXK_JUcCY-QOCkxnceYRMOteDfw';
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ════════════════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════════════════ */
+:root {
+  --pb0:#001a26;--pb1:#002d3d;--pb2:#005f73;--pb3:#0a9396;--pb4:#3dbdc0;--pb5:#94d2bd;
+  --gold:#c9a84c;--gold2:#e8d5a3;--red:#e03636;--orange:#f4722b;--green:#1a9e5c;--purple:#7c5cbf;--slate:#64748b;
+  --gh:linear-gradient(135deg,#001a26 0%,#005f73 45%,#0a9396 75%,#3dbdc0 100%);
+  --ghead:linear-gradient(90deg,#001a26 0%,#005f73 60%,#0a9396 100%);
+  --ggold:linear-gradient(135deg,#c9a84c,#e8d5a3);
+  --s1:0 1px 4px rgba(0,30,45,.12);--s2:0 4px 16px rgba(0,30,45,.16);--s3:0 8px 32px rgba(0,30,45,.22);
+  --fd:'DM Serif Display',Georgia,serif;--fb:'DM Sans',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  --r:6px;--rm:10px;--rl:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);font-size:13px;background:#f0f4f7;color:#1a2a33;min-height:100vh;overflow-x:hidden}
+
+/* ════ LOGIN PAGE ════ */
+#login-page {
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background: var(--gh);
+  position:relative;overflow:hidden;
+}
+#login-page::before {
+  content:'';position:absolute;inset:0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(61,189,192,.25) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 20%, rgba(201,168,76,.15) 0%, transparent 50%);
+}
+.login-card {
+  background:#fff;border-radius:20px;padding:44px 48px;
+  width:420px;max-width:94vw;
+  box-shadow:0 24px 80px rgba(0,10,20,.45);
+  position:relative;z-index:1;
+}
+.login-logo {
+  display:flex;align-items:center;gap:14px;margin-bottom:32px;
+}
+.login-logo-mark {
+  width:48px;height:48px;background:var(--ggold);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:18px;font-weight:700;color:var(--pb1);
+  box-shadow:0 4px 16px rgba(201,168,76,.4);
+}
+.login-title {font-family:var(--fd);font-size:22px;color:var(--pb1);}
+.login-sub {font-size:11px;color:var(--slate);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+.login-form {display:flex;flex-direction:column;gap:16px;}
+.lf-label {font-size:10.5px;font-weight:600;color:var(--pb2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;display:block;}
+.lf-input {
+  width:100%;padding:11px 14px;
+  border:1.5px solid #d0e4ea;border-radius:var(--rm);
+  font-family:var(--fb);font-size:13.5px;color:#1a2a33;background:#f8fbfc;outline:none;
+  transition:all .16s;
+}
+.lf-input:focus{border-color:var(--pb3);background:#fff;box-shadow:0 0 0 3px rgba(10,147,150,.1);}
+.btn-login {
+  padding:13px;background:var(--gh);border:none;border-radius:var(--rm);
+  color:#fff;font-family:var(--fb);font-size:14px;font-weight:600;cursor:pointer;
+  transition:all .18s;letter-spacing:.03em;box-shadow:0 4px 16px rgba(0,95,115,.3);
+  margin-top:4px;
+}
+.btn-login:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.login-err {
+  background:rgba(224,54,54,.08);border:1px solid rgba(224,54,54,.25);
+  border-radius:var(--r);padding:10px 14px;font-size:12px;color:#b91c1c;display:none;
+}
+
+/* ════ MAIN APP ════ */
+#app-page{display:none;}
+
+.ah{background:var(--ghead);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(0,30,50,.35)}
+.alo{display:flex;align-items:center;gap:12px}
+.alm{width:36px;height:36px;background:var(--ggold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:15px;font-weight:700;color:var(--pb1);}
+.alt{font-family:var(--fd);font-size:16px;color:#fff;}
+.als{font-size:9px;font-weight:300;color:rgba(148,210,189,.8);letter-spacing:.15em;text-transform:uppercase}
+.hn{display:flex;gap:3px}
+.nt{padding:7px 16px;border-radius:var(--r);border:1px solid transparent;background:transparent;color:rgba(255,255,255,.65);font-family:var(--fb);font-size:12px;font-weight:500;cursor:pointer;transition:all .18s;}
+.nt:hover{background:rgba(255,255,255,.1);color:#fff}
+.nt.active{background:rgba(255,255,255,.15);border-color:rgba(148,210,189,.4);color:#fff}
+.ht{display:flex;align-items:center;gap:8px}
+.hs{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;color:#fff;font-family:var(--fb);font-size:11.5px;padding:5px 8px;cursor:pointer;outline:none}
+.hs option{background:#003545}
+.bs{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-family:var(--fb);font-size:11.5px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.bs:hover{background:rgba(255,255,255,.2)}
+.bs.gd{background:var(--ggold);border-color:transparent;color:var(--pb1)}
+.bs.gd:hover{filter:brightness(1.08)}
+.bs.rd{background:rgba(224,54,54,.2);border-color:rgba(224,54,54,.3);color:#ffaaaa}
+
+/* user badge */
+.user-badge {
+  display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;
+}
+.user-avatar {
+  width:28px;height:28px;border-radius:50%;background:var(--ggold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--pb1);
+}
+.user-name {font-size:11.5px;font-weight:500;color:#fff;}
+.user-role {font-size:9.5px;color:rgba(148,210,189,.8);text-transform:uppercase;letter-spacing:.08em;}
+
+/* ════ VIEWS ════ */
+.vw{display:none}.vw.active{display:flex;flex-direction:column}
+
+/* ════ SPLIT LAYOUT ════ */
+.sl{display:flex;height:calc(100vh - 58px);overflow:hidden}
+.lp{width:440px;flex-shrink:0;background:#fff;border-right:1px solid #d8e8ec;overflow-y:auto;display:flex;flex-direction:column}
+.lp::-webkit-scrollbar{width:4px}.lp::-webkit-scrollbar-thumb{background:var(--pb5);border-radius:2px}
+.ph{background:var(--gh);padding:16px 20px 14px;flex-shrink:0}
+.pt{font-family:var(--fd);font-size:17px;color:#fff;margin-bottom:3px}
+.ps{font-size:11px;color:rgba(148,210,189,.8);letter-spacing:.08em;text-transform:uppercase}
+.fb{padding:18px 20px;flex:1}
+.fs{margin-bottom:18px;border:1px solid #e2edf0;border-radius:var(--rm);overflow:hidden}
+.fsh{background:linear-gradient(90deg,#f0f8fa,#fafcfd);padding:8px 14px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pb2);border-bottom:1px solid #e2edf0}
+.fsb{padding:14px;display:flex;flex-direction:column;gap:10px}
+.fr{display:flex;gap:10px}.fr .fw{flex:1}
+.fw{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:10px;font-weight:600;color:var(--pb2);letter-spacing:.08em;text-transform:uppercase}
+.fi,.fse,.fta{width:100%;background:#f6fafc;border:1.5px solid #d0e4ea;border-radius:var(--r);padding:8px 10px;font-family:var(--fb);font-size:12.5px;color:#1a2a33;outline:none;transition:all .16s}
+.fi:focus,.fse:focus,.fta:focus{border-color:var(--pb3);background:#fff;box-shadow:0 0 0 3px rgba(10,147,150,.1)}
+.fta{resize:vertical;line-height:1.55}.fse{cursor:pointer}
+.fi:read-only{background:#f0f4f7;color:var(--slate);cursor:default}
+
+/* AP card */
+.apc{background:linear-gradient(145deg,#f8fdfd,#f0fafc);border:1.5px solid #cce8ed;border-radius:var(--rm);padding:12px 14px;position:relative;animation:si .2s ease;margin-bottom:10px}
+@keyframes si{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.apn{position:absolute;top:-10px;left:12px;width:20px;height:20px;background:var(--gh);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+.bra{position:absolute;top:8px;right:8px;width:22px;height:22px;background:rgba(224,54,54,.1);border:1px solid rgba(224,54,54,.2);border-radius:4px;color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.bra:hover{background:rgba(224,54,54,.2)}
+.baa{display:flex;align-items:center;gap:7px;width:100%;padding:9px 14px;background:linear-gradient(90deg,rgba(10,147,150,.08),rgba(61,189,192,.06));border:1.5px dashed rgba(10,147,150,.35);border-radius:var(--rm);color:var(--pb2);font-family:var(--fb);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .16s}
+.baa:hover{background:linear-gradient(90deg,rgba(10,147,150,.14),rgba(61,189,192,.1));border-color:var(--pb3)}
+.bsm{width:100%;padding:11px;background:var(--gh);border:none;border-radius:var(--rm);color:#fff;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;box-shadow:0 3px 12px rgba(0,95,115,.3)}
+.bsm:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.tt{width:36px;height:20px;background:#d0e4ea;border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+.tt.on{background:var(--green)}
+.th{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tt.on .th{transform:translateX(16px)}
+
+/* Save indicator */
+.save-bar{display:flex;align-items:center;gap:8px;padding:8px 20px;background:#f0fafc;border-top:1px solid #d8eef2;font-size:11px;color:var(--slate);flex-shrink:0}
+.save-dot{width:7px;height:7px;border-radius:50%;background:#94a3b8;transition:background .3s;flex-shrink:0}
+.save-dot.saved{background:var(--green)}.save-dot.saving{background:var(--gold);animation:pu .8s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ════ PREVIEW ════ */
+.rp{flex:1;background:#e8f0f4;overflow-y:auto;display:flex;flex-direction:column;align-items:center}
+.pvt{position:sticky;top:0;z-index:50;width:100%;background:rgba(0,30,50,.35);backdrop-filter:blur(12px);padding:8px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(148,210,189,.15)}
+.pvl{font-size:11px;font-weight:500;color:rgba(255,255,255,.7);letter-spacing:.1em;text-transform:uppercase}
+.bpr{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--pb2);border:none;border-radius:6px;color:#fff;font-family:var(--fb);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.bpr:hover{background:var(--pb3)}
+.pva{padding:20px 20px 40px;width:100%}
+.a4{width:794px;max-width:100%;margin:0 auto;background:#fff;box-shadow:0 8px 40px rgba(0,30,50,.2);border-radius:3px;overflow:hidden;position:relative}
+.a4::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--gh)}
+.db{padding:32px 38px 36px}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #e2edf0}
+.don{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--pb3);margin-bottom:4px}
+.dtit{font-family:var(--fd);font-size:22px;color:var(--pb1);line-height:1.2}
+.dm{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.ddb{background:linear-gradient(135deg,#e0f4f7,#caf0e4);border:1px solid rgba(10,147,150,.2);border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--pb2)}
+.dml{font-size:10.5px;color:var(--slate)}
+.dgl{height:1px;background:linear-gradient(90deg,var(--gold),var(--gold2),transparent);margin-bottom:14px}
+.dcw{column-count:1;column-gap:18px}.dcw.c2{column-count:2}.dcw.c3{column-count:3}
+.mg{break-inside:avoid;margin-bottom:12px}
+.ar{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #f0f4f6}
+.ar:last-child{border-bottom:none}
+.atb{flex-shrink:0;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;margin-top:2px}
+.atb.im{background:rgba(244,114,43,.1);color:#c05018;border:1px solid rgba(244,114,43,.25)}
+.atb.lt{background:rgba(124,92,191,.08);color:#5a3fa0;border:1px solid rgba(124,92,191,.2)}
+.at{flex:1;font-size:12px;color:#2a3d46;line-height:1.45}
+.aa{font-size:9px;color:var(--slate);margin-top:2px;font-style:italic}
+.aps{flex-shrink:0;display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.ap{font-size:8px;font-weight:600;padding:1px 5px;border-radius:10px;white-space:nowrap}
+.ap.pc{background:rgba(224,54,54,.12);color:#b91c1c}.ap.ph{background:rgba(244,114,43,.12);color:#b94a10}
+.ap.pm{background:rgba(201,168,76,.15);color:#8b6914}.ap.pl{background:rgba(26,158,92,.1);color:#127548}
+.ap.so{background:rgba(10,147,150,.1);color:var(--pb2)}.ap.si{background:rgba(124,92,191,.12);color:#5a3fa0}
+.ap.sd{background:rgba(26,158,92,.1);color:#127548}.ap.sr{background:rgba(224,54,54,.12);color:#b91c1c}
+.ap.dn{background:rgba(26,158,92,.1);color:#127548}
+.dfl{margin-top:20px;padding-top:8px;border-top:1px solid #e2edf0;display:flex;justify-content:space-between;font-size:9px;color:var(--slate)}
+.de{padding:60px 40px;text-align:center}
+.dei{font-size:48px;margin-bottom:12px}.det{font-family:var(--fd);font-size:18px;color:var(--pb5);font-style:italic}
+
+/* ════ SUMMARY ════ */
+#vsum{padding:20px 24px 40px;gap:14px;height:calc(100vh - 58px);overflow-y:auto}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.mc{background:#fff;border:1px solid #d8e8ec;border-radius:var(--rl);overflow:hidden;cursor:pointer;transition:all .18s;box-shadow:var(--s1)}
+.mc:hover{box-shadow:var(--s2);transform:translateY(-2px)}
+.mch{background:var(--gh);padding:12px 16px}
+.mct{font-family:var(--fd);font-size:14px;color:#fff;margin-bottom:3px}
+.mcm{display:flex;gap:8px;font-size:10px;color:rgba(148,210,189,.85)}
+.mcb{padding:10px 14px}
+.mcs{display:flex;gap:8px;margin-bottom:8px}
+.mcst{display:flex;flex-direction:column;align-items:center;flex:1;padding:7px;background:#f8fdfd;border-radius:6px;border:1px solid #e2edf0}
+.mcsn{font-family:var(--fd);font-size:18px;color:var(--pb2)}
+.mcsl{font-size:9px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.06em}
+.mcf{padding:8px 14px;border-top:1px solid #e2edf0;display:flex;justify-content:space-between;align-items:center}
+.mci{font-size:10px;color:var(--slate);font-family:var(--fm)}
+.bi{width:26px;height:26px;background:#f0f8fa;border:1px solid #d0e4ea;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all .14s}
+.bi:hover{background:#e0f4f7}
+.bi.danger:hover{background:rgba(224,54,54,.1);border-color:rgba(224,54,54,.3)}
+
+/* ════ SEARCH ════ */
+#vs{padding:24px;gap:16px;height:calc(100vh - 58px);overflow-y:auto}
+.sbi{flex:1;background:#fff;border:1.5px solid #d0e4ea;border-radius:var(--rm);padding:11px 16px;font-family:var(--fb);font-size:13.5px;color:#1a2a33;outline:none;transition:all .16s;box-shadow:var(--s1)}
+.sbi:focus{border-color:var(--pb3)}
+.fc{padding:5px 12px;border-radius:20px;border:1.5px solid #d0e4ea;background:#fff;font-size:11.5px;font-weight:500;color:var(--slate);cursor:pointer;transition:all .14s}
+.fc:hover{border-color:var(--pb4);color:var(--pb2)}.fc.active{background:var(--pb2);border-color:var(--pb2);color:#fff}
+.src-c{background:#fff;border:1px solid #d8e8ec;border-radius:var(--rm);padding:14px 18px;box-shadow:var(--s1);cursor:pointer;transition:all .15s;border-left:4px solid var(--pb3)}
+.src-c:hover{box-shadow:var(--s2);transform:translateX(2px)}
+
+/* ════ ANALYTICS ════ */
+#va{padding:20px 24px 40px;gap:16px;height:calc(100vh - 58px);overflow-y:auto;display:flex;flex-direction:column}
+#va::-webkit-scrollbar{width:5px}#va::-webkit-scrollbar-thumb{background:var(--pb5);border-radius:3px}
+.kpr{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpc{background:#fff;border:1px solid #d8e8ec;border-radius:var(--rm);padding:14px 16px;box-shadow:var(--s1);position:relative;overflow:hidden;cursor:pointer;transition:all .15s}
+.kpc:hover{box-shadow:var(--s2);transform:translateY(-2px)}
+.kpc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpc.t::before{background:var(--gh)}.kpc.go::before{background:var(--ggold)}
+.kpc.gr::before{background:linear-gradient(135deg,#0a9396,#1a9e5c)}.kpc.rd::before{background:linear-gradient(135deg,#e03636,#f4722b)}
+.kpc.pu::before{background:linear-gradient(135deg,#7c5cbf,#0a9396)}
+.kpv{font-family:var(--fd);font-size:28px;color:var(--pb1);line-height:1;margin-bottom:2px}
+.kpl{font-size:11px;color:var(--slate);font-weight:500}
+.kpt{position:absolute;top:12px;right:12px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+.kpt.up{background:rgba(26,158,92,.1);color:var(--green)}.kpt.dn{background:rgba(224,54,54,.1);color:var(--red)}
+.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.ag.w{grid-template-columns:2fr 1fr}.ag.f{grid-template-columns:1fr}
+.cc{background:#fff;border:1px solid #d8e8ec;border-radius:var(--rl);padding:16px;box-shadow:var(--s1)}
+.cct{font-size:11.5px;font-weight:600;color:var(--pb2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.ccs{font-size:11px;color:var(--slate);margin-bottom:12px}
+.cw{position:relative;height:175px}.cw.tl{height:230px}
+.al{display:flex;flex-direction:column;gap:7px;max-height:240px;overflow-y:auto}
+.ai{display:flex;align-items:flex-start;gap:9px;padding:7px 11px;border-radius:var(--r);border:1px solid transparent}
+.ai.ov{background:rgba(224,54,54,.06);border-color:rgba(224,54,54,.2)}
+.ai.up{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.25)}
+.aib{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.aib.ov{background:rgba(224,54,54,.12);color:var(--red)}.aib.up{background:rgba(201,168,76,.15);color:#8b6914}
+.wt{width:100%;border-collapse:collapse}
+.wt th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);padding:6px 10px;border-bottom:2px solid #e2edf0;text-align:left}
+.wt td{font-size:12px;color:#2a3d46;padding:6px 10px;border-bottom:1px solid #f0f4f6}
+.wt tr:hover td{background:#f8fdfd}
+.wb{width:70px;height:5px;background:#e2edf0;border-radius:3px;overflow:hidden}
+.wbf{height:100%;background:var(--gh);border-radius:3px}
+.ct2{width:100%;border-collapse:collapse}
+.ct2 th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--slate);padding:6px 10px;border-bottom:2px solid #e2edf0;text-align:center}
+.ct2 th:first-child{text-align:left}
+.ct2 td{font-size:11px;color:#2a3d46;padding:6px 10px;border-bottom:1px solid #f0f4f6;text-align:center}
+.ct2 td:first-child{text-align:left;font-weight:500}
+.ct2 tr:hover td{background:#f8fdfd}
+.rp2{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+
+/* ════ ADMIN PANEL ════ */
+#vadmin{padding:20px 24px 40px;gap:16px;height:calc(100vh - 58px);overflow-y:auto;display:flex;flex-direction:column}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.admin-card{background:#fff;border:1px solid #d8e8ec;border-radius:var(--rl);padding:20px;box-shadow:var(--s1)}
+.admin-card-title{font-family:var(--fd);font-size:17px;color:var(--pb1);margin-bottom:4px}
+.admin-card-sub{font-size:11.5px;color:var(--slate);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e2edf0}
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);padding:7px 12px;border-bottom:2px solid #e2edf0;text-align:left}
+.user-table td{font-size:12.5px;color:#2a3d46;padding:9px 12px;border-bottom:1px solid #f0f4f6;vertical-align:middle}
+.user-table tr:hover td{background:#f8fdfd}
+.role-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;letter-spacing:.04em}
+.role-badge.admin{background:rgba(201,168,76,.15);color:#8b6914;border:1px solid rgba(201,168,76,.3)}
+.role-badge.editor{background:rgba(10,147,150,.1);color:var(--pb2);border:1px solid rgba(10,147,150,.2)}
+.role-badge.viewer{background:#f0f4f7;color:var(--slate);border:1px solid #d0e4ea}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.status-dot.active{background:var(--green)}.status-dot.inactive{background:var(--red)}
+.btn-xs{padding:4px 10px;border-radius:5px;border:1px solid #d0e4ea;background:#f8fbfc;font-family:var(--fb);font-size:11px;cursor:pointer;transition:all .14s;color:#2a3d46}
+.btn-xs:hover{background:#e0f4f7;border-color:var(--pb4)}
+.btn-xs.danger{color:var(--red);border-color:rgba(224,54,54,.25)}.btn-xs.danger:hover{background:rgba(224,54,54,.08)}
+.btn-xs.success{background:var(--gh);color:#fff;border-color:transparent}
+.btn-xs.success:hover{filter:brightness(1.1)}
+.invite-form{display:flex;flex-direction:column;gap:10px}
+.audit-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.audit-item{display:flex;gap:10px;align-items:flex-start;padding:7px 10px;background:#f8fbfc;border-radius:6px;border:1px solid #e2edf0;font-size:11.5px}
+.audit-time{font-family:var(--fm);font-size:9.5px;color:var(--slate);white-space:nowrap;margin-top:1px}
+.audit-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+.audit-badge.insert{background:rgba(26,158,92,.1);color:var(--green)}
+.audit-badge.update{background:rgba(10,147,150,.1);color:var(--pb2)}
+.audit-badge.delete{background:rgba(224,54,54,.1);color:var(--red)}
+
+/* ════ DRILL MODAL ════ */
+.dro{position:fixed;inset:0;background:rgba(0,20,30,.55);backdrop-filter:blur(6px);z-index:900;display:none;align-items:center;justify-content:center}
+.dro.show{display:flex}
+.drm{background:#fff;border-radius:var(--rl);padding:24px;width:580px;max-width:92vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,20,30,.4)}
+.drt{font-family:var(--fd);font-size:18px;color:var(--pb1);margin-bottom:4px}
+.drs{font-size:12px;color:var(--slate);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2edf0}
+.drc{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--slate)}
+.dric{background:linear-gradient(145deg,#f8fdfd,#f0fafc);border:1px solid #d0e8ed;border-radius:var(--r);padding:9px 13px;margin-bottom:6px}
+.drit{font-weight:600;font-size:12px;color:var(--pb1);margin-bottom:3px}
+.drim{font-size:11px;color:var(--slate)}
+
+/* ════ IMPORT MODAL ════ */
+#imp-overlay{display:none;position:fixed;inset:0;background:rgba(0,20,30,.6);backdrop-filter:blur(8px);z-index:950;align-items:center;justify-content:center}
+#imp-overlay.show{display:flex}
+
+/* ════ CHATBOT ════ */
+#chat-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:var(--gh);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,95,115,.45);z-index:800;font-size:22px;transition:all .2s}
+#chat-fab:hover{transform:scale(1.1)}
+#chat-panel{display:none;position:fixed;bottom:86px;right:24px;width:360px;max-height:520px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,30,50,.25);z-index:800;flex-direction:column;overflow:hidden;border:1px solid #d0e8ed}
+
+/* ════ TOAST ════ */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(0,20,30,.95);border:1px solid rgba(148,210,189,.35);border-radius:10px;padding:10px 20px;color:#fff;font-size:13px;font-weight:500;backdrop-filter:blur(12px);z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ════ LOADING ════ */
+.loading-overlay{position:fixed;inset:0;background:rgba(0,20,30,.6);backdrop-filter:blur(4px);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-spinner{width:48px;height:48px;border:4px solid rgba(148,210,189,.3);border-top-color:var(--pb3);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:var(--fd);font-size:16px;color:#fff;font-style:italic}
+
+/* ════ PERMISSION LOCK ════ */
+.locked-overlay{position:absolute;inset:0;background:rgba(240,244,247,.7);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;border-radius:inherit;z-index:10;cursor:not-allowed}
+.locked-msg{font-size:12px;color:var(--slate);font-style:italic;padding:8px 16px;background:#fff;border-radius:20px;border:1px solid #d0e4ea}
+
+/* ════ PRINT ════ */
+@media print{
+  @page{size:A4 portrait;margin:10mm 12mm}
+  body{background:none!important}
+  .ah,.lp,.pvt,#vs,#va,#vsum,#vadmin,.toast,#chat-fab,#chat-panel{display:none!important}
+  .sl{display:block!important;height:auto!important}
+  .rp{background:none!important;display:block!important;overflow:visible!important;padding:0!important}
+  .pva{padding:0!important}
+  .a4{box-shadow:none!important;border-radius:0!important;width:100%!important}
+  .a4::before{display:none!important}
+  .db{padding:0!important}
+  .dcw.c2{column-count:2;column-gap:8mm}.dcw.c3{column-count:3;column-gap:6mm}
+  .mg{break-inside:avoid}
+}
+@media(max-width:900px){
+  .sl{flex-direction:column;height:auto}.lp{width:100%;max-height:55vh}
+  .kpr{grid-template-columns:repeat(2,1fr)}.ag{grid-template-columns:1fr}.ag.w{grid-template-columns:1fr}
+  .admin-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ LOADING SCREEN ════ -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading VKP MOM System…</div>
+</div>
+
+<!-- ════ LOGIN PAGE ════ -->
+<div id="login-page" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">VKP</div>
+      <div>
+        <div class="login-title">Director MOM System</div>
+        <div style="font-size:10px;color:var(--slate);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Velammal Knowledge Park</div>
+      </div>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-form">
+      <div>
+        <label class="lf-label">Email Address</label>
+        <input type="email" class="lf-input" id="li-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div>
+        <label class="lf-label">Password</label>
+        <input type="password" class="lf-input" id="li-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-login" id="li-btn" onclick="doLogin()">Sign In →</button>
+    </div>
+    <div style="margin-top:20px;text-align:center;font-size:11px;color:var(--slate)">
+      Contact your administrator for access
+    </div>
+  </div>
+</div>
+
+<!-- ════ MAIN APP ════ -->
+<div id="app-page">
+
+<header class="ah">
+  <div class="alo">
+    <div class="alm">VKP</div>
+    <div><div class="alt">Director MOM System</div><div class="als">Velammal Knowledge Park · Central Office</div></div>
+  </div>
+  <nav class="hn">
+    <button class="nt active" onclick="sv('entry',this)">📝 Entry</button>
+    <button class="nt" onclick="sv('sum',this)">📋 Summary</button>
+    <button class="nt" onclick="sv('search',this)">🔍 Search</button>
+    <button class="nt" onclick="sv('analytics',this)">📊 Analytics</button>
+    <button class="nt" id="admin-tab" style="display:none" onclick="sv('admin',this)">⚙ Admin</button>
+  </nav>
+  <div class="ht">
+    <button class="bs" onclick="expCur()" id="btn-export">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export
+    </button>
+    <button class="bs" onclick="dlTemplate()">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Template
+    </button>
+    <button class="bs" onclick="trigImp()">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import
+    </button>
+    <input type="file" id="imp-file" accept=".docx,.xlsx,.xls" style="display:none" onchange="handleImpFile(this)">
+    <button class="bs gd" onclick="nm()" id="btn-new">+ New Meeting</button>
+    <div class="user-badge" id="user-badge">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-role" id="user-role-badge">—</div>
+      </div>
+    </div>
+    <button class="bs rd" onclick="doLogout()">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign Out
+    </button>
+  </div>
+</header>
+
+<!-- ENTRY VIEW -->
+<div id="ve" class="vw active">
+  <div class="sl">
+    <aside class="lp" id="lp-aside">
+      <div class="ph"><div class="pt">Meeting Record</div><div class="ps" id="meeting-mode-label">Fill in below · Preview updates live</div></div>
+      <div class="fb" id="lp-form-body">
+        <div class="fs">
+          <div class="fsh">📅 Meeting Details</div>
+          <div class="fsb">
+            <div class="fr">
+              <div class="fw"><label class="fl">Date</label><input type="date" class="fi" id="fd" oninput="ud();as()"></div>
+              <div class="fw"><label class="fl">Day</label><input type="text" class="fi" id="fday" readonly style="background:#f0f8fa;color:var(--pb2);font-weight:600"></div>
+            </div>
+            <div class="fw"><label class="fl">Meeting Title</label><input type="text" class="fi" id="ftit" placeholder="e.g. Accounts Review Meeting" oninput="as()"></div>
+            <div class="fr">
+              <div class="fw">
+                <label class="fl">Campus / School</label>
+                <select class="fse" id="fcamp" onchange="occ()">
+                  <option value="All Campus">All Campus</option><option value="All School">All School</option>
+                  <option value="Namakkal">Namakkal</option><option value="Coimbatore">Coimbatore</option>
+                  <option value="Vellore">Vellore</option><option value="Trichy">Trichy</option>
+                  <option value="Erode">Erode</option><option value="Tondiarpet">Tondiarpet</option>
+                  <option value="Kallakurichi">Kallakurichi</option><option value="Pondicherry">Pondicherry</option>
+                  <option value="Central Office">Central Office</option><option value="custom">+ Add Campus…</option>
+                </select>
+              </div>
+              <div class="fw" id="ccw" style="display:none"><label class="fl">Campus Name</label><input type="text" class="fi" id="fcc" oninput="as()"></div>
+            </div>
+            <div class="fr">
+              <div class="fw">
+                <label class="fl">Category</label>
+                <select class="fse" id="fcat" onchange="occat()">
+                  <option>Academics</option><option>Admin</option><option>Marketing / Admission</option>
+                  <option>Competition</option><option>ECA</option><option>Finance / Fee</option>
+                  <option>IIT / NEET</option><option>Staff / HR</option><option>Infrastructure</option>
+                  <option value="custom">+ Add Category…</option>
+                </select>
+              </div>
+              <div class="fw" id="catcw" style="display:none"><label class="fl">Category Name</label><input type="text" class="fi" id="fcatc" oninput="as()"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fs">
+          <div class="fsh">⚡ Action Points</div>
+          <div class="fsb" id="apl"></div>
+          <div style="padding:0 14px 14px"><button class="baa" id="btn-add-ap" onclick="addAP()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Action Point
+          </button></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px" id="save-btn-row">
+          <button class="bsm" onclick="sm()" style="flex:1">💾 Save Meeting</button>
+          <button class="bsm" onclick="nm()" style="flex:0 0 auto;padding:11px 16px;background:linear-gradient(135deg,#3dbdc0,#0a9396)">+ New</button>
+        </div>
+      </div>
+      <!-- VIEWER: read-only notice -->
+      <div id="viewer-notice" style="display:none;margin:16px 20px;padding:12px 16px;background:linear-gradient(135deg,rgba(10,147,150,.08),rgba(61,189,192,.05));border:1px solid rgba(10,147,150,.2);border-radius:var(--rm);font-size:12px;color:var(--pb2)">
+        👁 You have <strong>view-only</strong> access. Contact an administrator to request edit permissions.
+      </div>
+      <div class="save-bar">
+        <div class="save-dot" id="asdot"></div>
+        <span id="astxt">Connected to cloud · All changes synced</span>
+      </div>
+    </aside>
+    <main class="rp">
+      <div class="pvt">
+        <span class="pvl">Live A4 Preview</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="hs" id="cols" onchange="sp()" style="font-size:11px;padding:4px 8px">
+            <option value="1">1 Column</option><option value="2">2 Columns</option><option value="3">3 Columns</option>
+          </select>
+          <button class="bpr" onclick="window.print()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print / PDF
+          </button>
+        </div>
+      </div>
+      <div class="pva"><div class="a4" id="pvdoc"><div class="db"><div class="de"><div class="dei">📋</div><div class="det">Select or create a meeting</div></div></div></div></div>
+    </main>
+  </div>
+</div>
+
+<!-- SUMMARY VIEW -->
+<div id="vsum" class="vw">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-family:var(--fd);font-size:22px;color:var(--pb1)">All Meetings</div><div style="font-size:12px;color:var(--slate);margin-top:2px" id="scnt">Loading…</div></div>
+  </div>
+  <div class="sg" id="sgrid"></div>
+</div>
+
+<!-- SEARCH VIEW -->
+<div id="vs" class="vw">
+  <div style="display:flex;gap:10px;align-items:center">
+    <svg width="16" height="16" fill="none" stroke="var(--pb3)" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="sbi" id="srch" placeholder="Search meetings, people, campuses, action points…" oninput="ds()">
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div class="fc active" onclick="tf('all',this)">All</div>
+    <div class="fc" onclick="tf('Academics',this)">Academics</div>
+    <div class="fc" onclick="tf('Admin',this)">Admin</div>
+    <div class="fc" onclick="tf('Marketing / Admission',this)">Marketing</div>
+    <div class="fc" onclick="tf('Competition',this)">Competition</div>
+    <div class="fc" onclick="tf('IIT / NEET',this)">IIT / NEET</div>
+    <div class="fc" onclick="tf('ECA',this)">ECA</div>
+    <div class="fc" onclick="tf('Finance / Fee',this)">Finance</div>
+  </div>
+  <div id="sres" style="display:flex;flex-direction:column;gap:10px"><div style="text-align:center;padding:40px;color:var(--slate);font-style:italic">Type to search…</div></div>
+</div>
+
+<!-- ANALYTICS VIEW -->
+<div id="va" class="vw">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-family:var(--fd);font-size:22px;color:var(--pb1)">Strategic Insights</div><div style="font-size:12px;color:var(--slate);margin-top:2px" id="asub">Loading…</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="bs" onclick="window.print()">Print Report</button>
+      <button class="bs gd" onclick="ba()">↻ Refresh</button>
+    </div>
+  </div>
+  <div class="kpr" id="kpr"></div>
+  <div class="cc">
+    <div class="cct">⚠ Predictive Alerts</div><div class="ccs">Overdue items and upcoming deadlines within 3 days</div>
+    <div class="al" id="alist"><div style="color:var(--slate);font-style:italic;font-size:12px">Loading…</div></div>
+  </div>
+  <div class="ag">
+    <div class="cc"><div class="cct">Priority Distribution</div><div class="ccs">By priority level</div><div class="cw"><canvas id="cpri"></canvas></div></div>
+    <div class="cc"><div class="cct">Status Overview</div><div class="ccs">Completion breakdown</div><div class="cw"><canvas id="csta"></canvas></div></div>
+    <div class="cc"><div class="cct">Timeframe Split</div><div class="ccs">Immediate vs Long-term</div><div class="cw"><canvas id="ctf"></canvas></div></div>
+  </div>
+  <div class="ag w">
+    <div class="cc"><div class="cct">Category Performance</div><div class="ccs">Items per category — click to drill down</div><div class="cw tl"><canvas id="ccat"></canvas></div></div>
+    <div class="cc"><div class="cct">Recurring Themes</div><div class="ccs">Top keywords across meetings</div><div id="thlist" style="margin-top:4px;display:flex;flex-direction:column;gap:5px;max-height:245px;overflow-y:auto"></div></div>
+  </div>
+  <div class="ag w">
+    <div class="cc"><div class="cct">Campus Comparative</div><div class="ccs">Performance by campus</div><div style="overflow-x:auto;margin-top:8px"><table class="ct2"><thead><tr><th>Campus</th><th>Total</th><th>Done</th><th>Rate</th><th>Critical</th><th>Overdue</th></tr></thead><tbody id="camptb"></tbody></table></div></div>
+    <div class="cc"><div class="cct">Workload Distribution</div><div class="ccs">Items per assignee</div><div style="overflow-x:auto;margin-top:8px;max-height:245px;overflow-y:auto"><table class="wt"><thead><tr><th>Assignee</th><th>Items</th><th>Done</th><th>Load</th></tr></thead><tbody id="wltb"></tbody></table></div></div>
+  </div>
+  <div class="ag f"><div class="cc"><div class="cct">Meeting Frequency</div><div class="ccs">Meetings over time</div><div class="cw tl"><canvas id="ctim"></canvas></div></div></div>
+</div>
+
+<!-- ADMIN VIEW -->
+<div id="vadmin" class="vw">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-family:var(--fd);font-size:22px;color:var(--pb1)">Admin Panel</div><div style="font-size:12px;color:var(--slate);margin-top:2px">Manage users, permissions, and system settings</div></div>
+    <button class="bs gd" onclick="loadAdmin()">↻ Refresh</button>
+  </div>
+  <div class="admin-grid">
+    <!-- User Management -->
+    <div class="admin-card">
+      <div class="admin-card-title">👥 User Management</div>
+      <div class="admin-card-sub">All registered users and their access levels</div>
+      <div style="overflow-x:auto">
+        <table class="user-table">
+          <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="user-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Invite User -->
+    <div class="admin-card">
+      <div class="admin-card-title">✉ Invite New User</div>
+      <div class="admin-card-sub">Send an invitation to a new team member</div>
+      <div class="invite-form">
+        <div class="fw"><label class="fl">Full Name</label><input type="text" class="fi" id="inv-name" placeholder="e.g. Rajesh Kumar"></div>
+        <div class="fw"><label class="fl">Email Address</label><input type="email" class="fi" id="inv-email" placeholder="user@vkpedu.com"></div>
+        <div class="fw">
+          <label class="fl">Role</label>
+          <select class="fse" id="inv-role">
+            <option value="viewer">Viewer — Can view meetings and add follow-ups only</option>
+            <option value="editor">Editor — Can create and edit meetings, import files</option>
+            <option value="admin">Admin — Full access including user management</option>
+          </select>
+        </div>
+        <div style="background:#f0f8fa;border:1px solid #d0e8ed;border-radius:var(--r);padding:10px 14px;font-size:11.5px;color:var(--pb2)">
+          <strong>Role permissions:</strong><br>
+          🔵 <strong>Viewer:</strong> View all meetings, add follow-up updates only<br>
+          🟢 <strong>Editor:</strong> Create/edit own meetings, import files, manage action points<br>
+          🔴 <strong>Admin:</strong> All editor rights + delete meetings, manage users, view audit log
+        </div>
+        <button class="bsm" onclick="inviteUser()">Send Invitation →</button>
+      </div>
+    </div>
+    <!-- Meeting Management -->
+    <div class="admin-card">
+      <div class="admin-card-title">📋 Meeting Controls</div>
+      <div class="admin-card-sub">Admin-only meeting operations</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center;padding:10px;background:#f8fbfc;border:1px solid #e2edf0;border-radius:var(--r)">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:12.5px;color:var(--pb1)">Lock Old Meetings</div>
+            <div style="font-size:11px;color:var(--slate);margin-top:2px">Prevent edits to meetings older than 7 days</div>
+          </div>
+          <button class="btn-xs success" onclick="lockOldMeetings()">Lock</button>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;padding:10px;background:#f8fbfc;border:1px solid #e2edf0;border-radius:var(--r)">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:12.5px;color:var(--pb1)">Export All Data</div>
+            <div style="font-size:11px;color:var(--slate);margin-top:2px">Download all meetings as JSON backup</div>
+          </div>
+          <button class="btn-xs success" onclick="exportAllData()">Export</button>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;padding:10px;background:rgba(224,54,54,.04);border:1px solid rgba(224,54,54,.15);border-radius:var(--r)">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:12.5px;color:var(--pb1)">Purge Old Meetings</div>
+            <div style="font-size:11px;color:var(--red);margin-top:2px">Permanently delete meetings older than 1 year</div>
+          </div>
+          <button class="btn-xs danger" onclick="purgeOldMeetings()">Purge</button>
+        </div>
+      </div>
+    </div>
+    <!-- Audit Log -->
+    <div class="admin-card">
+      <div class="admin-card-title">📜 Audit Log</div>
+      <div class="admin-card-sub">Recent system activity by all users</div>
+      <div class="audit-list" id="audit-list">
+        <div style="color:var(--slate);font-style:italic;font-size:12px;text-align:center;padding:20px">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRILL MODAL -->
+<div class="dro" id="dro" onclick="cdm(event)">
+  <div class="drm"><button class="drc" onclick="cdm()">×</button>
+    <div class="drt" id="drt"></div><div class="drs" id="drs"></div><div id="dri"></div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div id="imp-overlay" onclick="closeImp(event)">
+  <div style="background:#fff;border-radius:16px;padding:28px 32px;width:540px;max-width:94vw;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,20,30,.45)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div style="font-family:var(--fd);font-size:20px;color:var(--pb1)">Import Meeting Data</div>
+      <button onclick="closeImp()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--slate);line-height:1">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--slate);margin-bottom:20px">Supports <strong>DOCX</strong> and <strong>XLSX/XLS</strong> spreadsheets</div>
+    <div id="imp-drop" onclick="trigImp()" ondragover="event.preventDefault();this.style.borderColor='var(--pb3)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)"
+      style="border:2px dashed #b8d8e0;border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fdfd;margin-bottom:20px">
+      <div style="font-size:36px;margin-bottom:10px">📂</div>
+      <div style="font-size:13.5px;font-weight:600;color:var(--pb2);margin-bottom:4px">Drop DOCX or XLSX here</div>
+      <div style="font-size:11.5px;color:var(--slate)">or click to browse — accepts .docx · .xlsx · .xls</div>
+    </div>
+    <div id="imp-status" style="display:none;padding:12px 16px;border-radius:8px;font-size:12.5px;margin-bottom:16px"></div>
+    <div id="imp-preview" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:var(--pb2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Preview — meetings to be imported</div>
+      <div id="imp-preview-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="confirmImport()" style="flex:1;padding:10px;background:var(--gh);border:none;border-radius:8px;color:#fff;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer">✓ Import All</button>
+        <button onclick="closeImp()" style="padding:10px 18px;background:#f0f4f7;border:1px solid #d0e4ea;border-radius:8px;color:var(--slate);font-family:var(--fb);font-size:13px;cursor:pointer">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHATBOT -->
+<div id="chat-fab" onclick="toggleChat()" title="Ask AI about your meetings">💬</div>
+<div id="chat-panel" style="display:none;position:fixed;bottom:86px;right:24px;width:360px;max-height:520px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,30,50,.25);z-index:800;flex-direction:column;overflow:hidden;border:1px solid #d0e8ed">
+  <div style="background:var(--gh);padding:13px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-family:var(--fd);font-size:15px;color:#fff">Meeting Assistant</div><div style="font-size:10px;color:rgba(148,210,189,.8)">Ask about action points, assignees…</div></div>
+    <button onclick="toggleChat()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer">×</button>
+  </div>
+  <div id="chat-msgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:180px;max-height:320px"></div>
+  <div style="padding:10px 12px;border-top:1px solid #e2edf0;display:flex;gap:8px">
+    <input id="chat-input" type="text" placeholder="Ask anything about meetings…" style="flex:1;border:1.5px solid #d0e4ea;border-radius:8px;padding:8px 12px;font-family:var(--fb);font-size:12.5px;outline:none" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" style="background:var(--gh);border:none;border-radius:8px;color:#fff;padding:8px 14px;font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer">Ask</button>
+  </div>
+</div>
+
+</div><!-- end app-page -->
+<div class="toast" id="toast"></div>
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION — REPLACE THESE WITH YOUR SUPABASE VALUES
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+
+// ═══════════════════════════════════════════════════════
+// SUPABASE CLIENT
+// ═══════════════════════════════════════════════════════
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  realtime: { params: { eventsPerSecond: 10 } }
+});
+
+// ═══════════════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════════════
+let currentUser = null;
+let currentProfile = null;
+let currentMeetingId = null;
+let meetings = [];       // local cache for analytics/summary
+let actionPoints = {};   // { meetingId: [ap, ...] }
+let followUps = {};      // { apId: [fu, ...] }
+let saveTimer = null;
+let chatOpen = false;
+let searchFilter = 'all';
+let charts = {};
+let _impPending = [];
+let apCounter = 0;
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+
+// ═══════════════════════════════════════════════════════
+// BOOT — AUTH STATE LISTENER
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await bootApp(session.user);
+  } else {
+    showLogin();
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      await bootApp(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      showLogin();
+    }
+  });
+});
+
+async function bootApp(user) {
+  currentUser = user;
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  currentProfile = profile;
+
+  if (!profile || !profile.is_active) {
+    await sb.auth.signOut();
+    showLoginError('Your account is inactive. Contact your administrator.');
+    return;
+  }
+
+  // Update header
+  document.getElementById('user-name').textContent = profile.full_name || user.email;
+  document.getElementById('user-role-badge').textContent = profile.role.toUpperCase();
+  document.getElementById('user-avatar').textContent = (profile.full_name || user.email).charAt(0).toUpperCase();
+
+  // Show/hide admin tab
+  if (profile.role === 'admin') {
+    document.getElementById('admin-tab').style.display = 'inline-flex';
+  }
+
+  // Apply role-based UI
+  applyRoleUI(profile.role);
+
+  // Load all meetings into cache
+  await loadAllMeetings();
+
+  // Setup realtime subscriptions
+  setupRealtime();
+
+  // Show app
+  document.getElementById('loading-overlay').style.display = 'none';
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app-page').style.display = 'block';
+
+  // Default: new meeting
+  await nm();
+  setToday();
+}
+
+function applyRoleUI(role) {
+  const isViewer = role === 'viewer';
+  const isAdmin = role === 'admin';
+
+  // Viewers: hide edit controls, show read-only notice
+  if (isViewer) {
+    document.getElementById('btn-new').style.display = 'none';
+    document.getElementById('btn-add-ap').style.display = 'none';
+    document.getElementById('save-btn-row').style.display = 'none';
+    document.getElementById('viewer-notice').style.display = 'block';
+    // Make all form inputs read-only
+    document.querySelectorAll('.fi, .fse, .fta').forEach(el => {
+      el.disabled = true;
+      el.style.opacity = '.7';
+    });
+  }
+}
+
+function showLogin() {
+  document.getElementById('loading-overlay').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('app-page').style.display = 'none';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass = document.getElementById('li-pass').value;
+  const btn = document.getElementById('li-btn');
+  if (!email || !pass) { showLoginError('Please enter email and password.'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  document.getElementById('login-err').style.display = 'none';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    showLoginError(error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : error.message);
+    btn.disabled = false; btn.textContent = 'Sign In →';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin();
+});
+
+async function doLogout() {
+  await sb.auth.signOut();
+  meetings = []; actionPoints = {}; followUps = {};
+  currentMeetingId = null; currentUser = null; currentProfile = null;
+}
+
+// ═══════════════════════════════════════════════════════
+// DATA LOADING — from Supabase
+// ═══════════════════════════════════════════════════════
+async function loadAllMeetings() {
+  const { data, error } = await sb.from('meetings')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) { console.error(error); return; }
+  meetings = data || [];
+}
+
+async function loadMeetingAPs(meetingId) {
+  const { data } = await sb.from('action_points')
+    .select('*')
+    .eq('meeting_id', meetingId)
+    .order('sort_order');
+  actionPoints[meetingId] = data || [];
+  // Load follow-ups for each AP
+  for (const ap of (data || [])) {
+    await loadFollowUps(ap.id);
+  }
+  return data || [];
+}
+
+async function loadFollowUps(apId) {
+  const { data } = await sb.from('follow_ups')
+    .select('*')
+    .eq('action_point_id', apId)
+    .order('created_at');
+  followUps[apId] = data || [];
+  return data || [];
+}
+
+// ═══════════════════════════════════════════════════════
+// REALTIME SUBSCRIPTIONS
+// ═══════════════════════════════════════════════════════
+function setupRealtime() {
+  sb.channel('meetings-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'meetings' }, async payload => {
+      await loadAllMeetings();
+      if (document.getElementById('vsum').classList.contains('active')) rsum();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'action_points' }, async payload => {
+      if (currentMeetingId) {
+        await loadMeetingAPs(currentMeetingId);
+        renderAPListFromCache();
+        sp();
+      }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'follow_ups' }, async payload => {
+      if (payload.new?.action_point_id) {
+        await loadFollowUps(payload.new.action_point_id);
+        renderAPListFromCache();
+        sp();
+      }
+    })
+    .subscribe();
+}
+
+// ═══════════════════════════════════════════════════════
+// MEETING CRUD
+// ═══════════════════════════════════════════════════════
+async function nm() {
+  if (currentProfile?.role === 'viewer') { tt('View-only access — contact admin to create meetings'); return; }
+  const today = new Date();
+  const { data: meeting, error } = await sb.from('meetings').insert({
+    title: '',
+    date: today.toISOString().slice(0,10),
+    day: DAYS[today.getDay()],
+    campus: 'All Campus',
+    category: 'Academics',
+    created_by: currentUser.id,
+    modified_by: currentUser.id
+  }).select().single();
+  if (error) { tt('Error creating meeting: ' + error.message); return; }
+  meetings.unshift(meeting);
+  await loadMeeting(meeting.id);
+  await logAudit('insert', 'meetings', meeting.id, { title: 'New meeting created' });
+  tt('New meeting created');
+}
+
+async function loadMeeting(id) {
+  currentMeetingId = id;
+  const m = meetings.find(x => x.id === id);
+  if (!m) return;
+
+  document.getElementById('fd').value = m.date || '';
+  document.getElementById('fday').value = m.day || '';
+  document.getElementById('ftit').value = m.title || '';
+
+  const cs = document.getElementById('fcamp');
+  const co = Array.from(cs.options).map(o => o.value);
+  if (co.includes(m.campus)) { cs.value = m.campus; document.getElementById('ccw').style.display = 'none'; }
+  else { cs.value = 'custom'; document.getElementById('fcc').value = m.campus; document.getElementById('ccw').style.display = 'block'; }
+
+  const ct = document.getElementById('fcat');
+  const cto = Array.from(ct.options).map(o => o.value);
+  if (cto.includes(m.category)) { ct.value = m.category; document.getElementById('catcw').style.display = 'none'; }
+  else { ct.value = 'custom'; document.getElementById('fcatc').value = m.category; document.getElementById('catcw').style.display = 'block'; }
+
+  await loadMeetingAPs(id);
+  renderAPListFromCache();
+  sp();
+  sas('saved');
+}
+
+async function sm() {
+  if (!currentMeetingId) return;
+  if (currentProfile?.role === 'viewer') { tt('View-only access'); return; }
+
+  const m = meetings.find(x => x.id === currentMeetingId);
+  if (m?.locked && currentProfile?.role !== 'admin') { tt('This meeting is locked. Contact admin.'); return; }
+
+  const updates = {
+    title: document.getElementById('ftit').value.trim(),
+    date: document.getElementById('fd').value,
+    day: document.getElementById('fday').value,
+    campus: gc(), category: gcat(),
+    modified_by: currentUser.id
+  };
+  const { error } = await sb.from('meetings').update(updates).eq('id', currentMeetingId);
+  if (error) { tt('Error: ' + error.message); return; }
+  Object.assign(meetings.find(x => x.id === currentMeetingId), updates);
+  sas('saved'); tt('✓ Meeting saved');
+  await logAudit('update', 'meetings', currentMeetingId, updates);
+}
+
+async function as() {
+  if (!currentMeetingId || currentProfile?.role === 'viewer') return;
+  sas('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const updates = {
+      title: document.getElementById('ftit').value.trim(),
+      date: document.getElementById('fd').value,
+      day: document.getElementById('fday').value,
+      campus: gc(), category: gcat(),
+      modified_by: currentUser.id
+    };
+    await sb.from('meetings').update(updates).eq('id', currentMeetingId);
+    Object.assign(meetings.find(x => x.id === currentMeetingId) || {}, updates);
+    sas('saved');
+  }, 800);
+}
+
+async function delMeeting(id) {
+  if (currentProfile?.role !== 'admin') { tt('Only admins can delete meetings'); return; }
+  if (!confirm('Delete this meeting and all its action points? This cannot be undone.')) return;
+  const { error } = await sb.from('meetings').delete().eq('id', id);
+  if (error) { tt('Error: ' + error.message); return; }
+  meetings = meetings.filter(m => m.id !== id);
+  delete actionPoints[id];
+  if (currentMeetingId === id) await nm();
+  rsum(); tt('✓ Meeting deleted');
+  await logAudit('delete', 'meetings', id, {});
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTION POINTS
+// ═══════════════════════════════════════════════════════
+function renderAPListFromCache() {
+  const aps = actionPoints[currentMeetingId] || [];
+  const container = document.getElementById('apl');
+  container.innerHTML = '';
+  aps.forEach((ap, idx) => container.appendChild(buildAPCard(ap, idx)));
+}
+
+function buildAPCard(ap, idx) {
+  const canEdit = currentProfile?.role !== 'viewer';
+  const stC = {'Open':'#0a9396','In Progress':'#7c5cbf','Done':'#1a9e5c','Overdue':'#e03636','Deferred':'#94a3b8'};
+  const stB = {'Open':'rgba(10,147,150,.1)','In Progress':'rgba(124,92,191,.12)','Done':'rgba(26,158,92,.1)','Overdue':'rgba(224,54,54,.1)','Deferred':'rgba(100,116,139,.1)'};
+  const st = ap.completed ? 'Done' : (ap.status || 'Open');
+  const fus = followUps[ap.id] || [];
+
+  const d = document.createElement('div');
+  d.className = 'apc';
+  d.id = 'apc' + ap.id;
+
+  const fuHtml = fus.map((fu, fi) =>
+    `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:3px">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:2px">
+        <div style="width:1px;height:5px;background:#94d2bd"></div>
+        <div style="width:6px;height:6px;border-radius:50%;background:#3dbdc0;flex-shrink:0"></div>
+      </div>
+      <div style="flex:1;background:#f0fbf8;border:1px solid #b8e8de;border-left:2px solid #3dbdc0;border-radius:0 5px 5px 0;padding:4px 9px">
+        <div style="font-size:9px;font-weight:600;color:#0a9396;font-family:monospace;margin-bottom:2px">
+          ↪ Update ${fi+1}${fu.date ? ' · ' + fdf(fu.date) : ''}
+          <span style="color:var(--slate);font-weight:400"> — ${eh(fu.added_by_name || '')}</span>
+        </div>
+        <div style="font-size:11px;color:#2a3d46;line-height:1.45">${eh(fu.text)}</div>
+        ${canEdit || fu.added_by === currentUser?.id
+          ? `<button onclick="removeFU('${ap.id}','${fu.id}')" style="background:none;border:none;font-size:10px;color:var(--slate);cursor:pointer;margin-top:2px">× Remove</button>`
+          : ''}
+      </div>
+    </div>`
+  ).join('');
+
+  d.innerHTML = `
+    <div class="apn">${idx + 1}</div>
+    ${canEdit ? `<button class="bra" onclick="removeAP('${ap.id}')">×</button>` : ''}
+    <div style="display:flex;gap:8px;margin-bottom:8px;padding-right:28px">
+      <div class="fw"><label class="fl">Timeframe</label>
+        <select class="fse" ${canEdit ? '' : 'disabled'} onchange="uap('${ap.id}','type',this.value)">
+          <option ${ap.type==='Immediate'?'selected':''}>Immediate</option>
+          <option ${ap.type==='Long-term'?'selected':''}>Long-term</option>
+        </select></div>
+      <div class="fw"><label class="fl">Priority</label>
+        <select class="fse" ${canEdit ? '' : 'disabled'} onchange="uap('${ap.id}','priority',this.value)">
+          <option ${ap.priority==='Critical'?'selected':''}>Critical</option>
+          <option ${ap.priority==='High'?'selected':''}>High</option>
+          <option ${ap.priority==='Medium'?'selected':''}>Medium</option>
+          <option ${ap.priority==='Low'?'selected':''}>Low</option>
+        </select></div>
+    </div>
+    <div class="fw" style="margin-bottom:10px"><label class="fl">Action Point / Notes</label>
+      <textarea class="fta" rows="2" placeholder="Describe the action point…" ${canEdit ? '' : 'disabled'}
+        oninput="uap('${ap.id}','text',this.value)">${eh(ap.text || '')}</textarea></div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid #d8eef2">
+      <div style="position:relative;display:flex;align-items:center">
+        <div style="position:absolute;left:8px;font-size:9px;color:${stC[st]};pointer-events:none;z-index:1">●</div>
+        <select class="fse" ${canEdit ? '' : 'disabled'} onchange="uap('${ap.id}','status',this.value)"
+          style="padding:4px 8px 4px 22px;font-size:11px;font-weight:600;color:${stC[st]};background:${stB[st]};border-color:${stC[st]}44;border-radius:20px;height:auto;min-width:0">
+          ${['Open','In Progress','Done','Overdue','Deferred'].map(s => `<option ${st===s?'selected':''} style="background:#fff;color:#1a2a33">${s}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;background:#f0f8fa;border:1.5px solid #cce8ed;border-radius:20px;padding:3px 10px;font-size:11px;color:var(--pb2)">
+        <span style="font-size:9px;opacity:.7">📅</span>
+        <input type="date" value="${ap.timeline || ''}" ${canEdit ? '' : 'disabled'}
+          onchange="uap('${ap.id}','timeline',this.value)"
+          style="border:none;background:transparent;font-family:var(--fm);font-size:11px;color:var(--pb2);outline:none;width:110px;padding:0">
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;background:#f0f8fa;border:1.5px solid #cce8ed;border-radius:20px;padding:3px 10px;flex:1;min-width:100px">
+        <span style="font-size:9px;color:var(--pb3);flex-shrink:0">👤</span>
+        <input type="text" value="${eh(ap.assigned_to || '')}" placeholder="Assign to…" ${canEdit ? '' : 'disabled'}
+          oninput="uap('${ap.id}','assigned_to',this.value)"
+          style="border:none;background:transparent;font-family:var(--fb);font-size:11px;color:var(--pb1);outline:none;width:100%;padding:0">
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none" onclick="${canEdit ? `toggleComplete('${ap.id}')` : ''}">
+        <div class="tt ${ap.completed ? 'on' : ''}" id="tt${ap.id}"><div class="th"></div></div>
+        <span style="font-size:10.5px;font-weight:500;color:var(--slate)" id="tl${ap.id}">${ap.completed ? 'Done ✓' : 'Done?'}</span>
+      </label>
+    </div>
+    <div style="margin-top:10px;border-top:1px dashed #c8e8ed;padding-top:8px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;cursor:pointer" onclick="toggleFU('${ap.id}')">
+        <span style="font-size:9px;font-weight:700;color:var(--pb3);letter-spacing:.1em;text-transform:uppercase">📋 Follow-Up Updates</span>
+        ${fus.length > 0 ? `<span style="font-size:9px;background:var(--pb3);color:#fff;border-radius:10px;padding:1px 6px">${fus.length}</span>` : ''}
+        <svg width="10" height="10" fill="none" stroke="var(--pb3)" stroke-width="2" viewBox="0 0 24 24" id="fua${ap.id}" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="fub${ap.id}" style="display:none">
+        ${fus.length > 0 ? `<div style="margin-bottom:7px">${fuHtml}</div>` : ''}
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="date" id="fud${ap.id}" value="${new Date().toISOString().slice(0,10)}"
+            style="padding:5px 8px;border:1.5px solid #d0e4ea;border-radius:6px;font-size:11px;outline:none;font-family:var(--fm)">
+          <input type="text" id="fut${ap.id}" placeholder="Update note…"
+            style="flex:1;padding:5px 9px;border:1.5px solid #d0e4ea;border-radius:6px;font-family:var(--fb);font-size:11.5px;outline:none"
+            onkeydown="if(event.key==='Enter')addFU('${ap.id}')">
+          <button onclick="addFU('${ap.id}')" style="padding:5px 10px;background:var(--pb3);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add</button>
+        </div>
+      </div>
+    </div>`;
+  return d;
+}
+
+async function addAP() {
+  if (!currentMeetingId || currentProfile?.role === 'viewer') return;
+  const existing = actionPoints[currentMeetingId] || [];
+  const { data: ap, error } = await sb.from('action_points').insert({
+    meeting_id: currentMeetingId,
+    type: 'Immediate', text: '', priority: 'High', status: 'Open',
+    assigned_to: '', completed: false,
+    sort_order: existing.length,
+    created_by: currentUser.id
+  }).select().single();
+  if (error) { tt('Error: ' + error.message); return; }
+  if (!actionPoints[currentMeetingId]) actionPoints[currentMeetingId] = [];
+  actionPoints[currentMeetingId].push(ap);
+  followUps[ap.id] = [];
+  renderAPListFromCache();
+  sp();
+}
+
+async function removeAP(apId) {
+  if (currentProfile?.role === 'viewer') return;
+  const m = meetings.find(x => x.id === currentMeetingId);
+  if (m?.locked && currentProfile?.role !== 'admin') { tt('Meeting is locked'); return; }
+  const { error } = await sb.from('action_points').delete().eq('id', apId);
+  if (error) { tt('Error: ' + error.message); return; }
+  actionPoints[currentMeetingId] = (actionPoints[currentMeetingId] || []).filter(a => a.id !== apId);
+  delete followUps[apId];
+  renderAPListFromCache();
+  sp();
+}
+
+function uap(apId, field, value) {
+  if (currentProfile?.role === 'viewer') return;
+  const ap = (actionPoints[currentMeetingId] || []).find(a => a.id === apId);
+  if (!ap) return;
+  ap[field] = value;
+  sas('saving');
+  clearTimeout(ap._saveTimer);
+  ap._saveTimer = setTimeout(async () => {
+    const updates = { [field]: value };
+    if (field === 'text') updates.text = value;
+    await sb.from('action_points').update(updates).eq('id', apId);
+    sas('saved');
+    sp();
+  }, 600);
+}
+
+async function toggleComplete(apId) {
+  if (currentProfile?.role === 'viewer') return;
+  const ap = (actionPoints[currentMeetingId] || []).find(a => a.id === apId);
+  if (!ap) return;
+  ap.completed = !ap.completed;
+  const t = document.getElementById('tt' + apId);
+  const l = document.getElementById('tl' + apId);
+  if (t) t.classList.toggle('on', ap.completed);
+  if (l) l.textContent = ap.completed ? 'Done ✓' : 'Done?';
+  await sb.from('action_points').update({ completed: ap.completed }).eq('id', apId);
+  sp();
+}
+
+// ═══════════════════════════════════════════════════════
+// FOLLOW-UPS
+// ═══════════════════════════════════════════════════════
+function toggleFU(apId) {
+  const b = document.getElementById('fub' + apId);
+  const a = document.getElementById('fua' + apId);
+  if (!b) return;
+  const open = b.style.display === 'block';
+  b.style.display = open ? 'none' : 'block';
+  if (a) a.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+async function addFU(apId) {
+  const dateEl = document.getElementById('fud' + apId);
+  const textEl = document.getElementById('fut' + apId);
+  const text = (textEl?.value || '').trim();
+  if (!text) return;
+  const { data: fu, error } = await sb.from('follow_ups').insert({
+    action_point_id: apId,
+    text,
+    date: dateEl?.value || null,
+    added_by: currentUser.id,
+    added_by_name: currentProfile?.full_name || currentUser.email
+  }).select().single();
+  if (error) { tt('Error: ' + error.message); return; }
+  if (!followUps[apId]) followUps[apId] = [];
+  followUps[apId].push(fu);
+  if (textEl) textEl.value = '';
+  renderAPListFromCache();
+  sp();
+  tt('✓ Follow-up added');
+}
+
+async function removeFU(apId, fuId) {
+  const { error } = await sb.from('follow_ups').delete().eq('id', fuId);
+  if (error) { tt('Error: ' + error.message); return; }
+  followUps[apId] = (followUps[apId] || []).filter(f => f.id !== fuId);
+  renderAPListFromCache();
+  sp();
+}
+
+// ═══════════════════════════════════════════════════════
+// LIVE PREVIEW
+// ═══════════════════════════════════════════════════════
+function sp() {
+  const m = currentMeetingId ? meetings.find(x => x.id === currentMeetingId) : null;
+  const nc = parseInt(document.getElementById('cols').value || '1');
+  const doc = document.getElementById('pvdoc');
+  if (!m || !m.title) {
+    doc.innerHTML = '<div class="db"><div class="de"><div class="dei">📋</div><div class="det">Fill in meeting details to see preview</div></div></div>';
+    return;
+  }
+  const ds = m.date ? fdf(m.date) : '—';
+  const aps = actionPoints[currentMeetingId] || [];
+  const ah = aps.map(ap => {
+    if (!ap.text) return '';
+    const fus = followUps[ap.id] || [];
+    const fuHtml = fus.length > 0
+      ? '<div style="margin:4px 0 4px 28px">' + fus.map((fu, fi) =>
+          '<div style="display:flex;gap:7px;align-items:flex-start;margin-bottom:3px">' +
+          '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:2px">' +
+          '<div style="width:1px;height:5px;background:#94d2bd"></div>' +
+          '<div style="width:6px;height:6px;border-radius:50%;background:#3dbdc0;flex-shrink:0"></div>' +
+          '</div><div style="flex:1;background:#f0fbf8;border:1px solid #b8e8de;border-left:2px solid #3dbdc0;border-radius:0 5px 5px 0;padding:3px 8px">' +
+          '<div style="font-size:8.5px;font-weight:600;color:#0a9396;font-family:monospace;margin-bottom:1px">↪ Update ' + (fi+1) + (fu.date ? ' · ' + fdf(fu.date) : '') + '</div>' +
+          '<div style="font-size:10.5px;color:#2a3d46;line-height:1.45">' + eh(fu.text) + '</div>' +
+          '</div></div>'
+        ).join('') + '</div>'
+      : '';
+    const st = ap.completed ? 'Done' : (ap.status || 'Open');
+    const pri = ap.priority || 'Medium';
+    return '<div class="ar">' +
+      '<span class="atb ' + (ap.type==='Immediate'?'im':'lt') + '">' + (ap.type==='Immediate'?'⚡Imm':'📋LT') + '</span>' +
+      '<div style="flex:1"><div class="at">' + eh(ap.text) + '</div>' +
+        (ap.assigned_to || ap.timeline ? '<div class="aa">' + (ap.assigned_to ? '→ ' + eh(ap.assigned_to) : '') + (ap.timeline ? ' · 📅 ' + fdf(ap.timeline) : '') + '</div>' : '') +
+        fuHtml + '</div>' +
+      '<div class="aps">' +
+        '<span class="ap p' + pri[0].toLowerCase() + '">' + pri + '</span>' +
+        '<span class="ap s' + (st==='In Progress'?'i':st==='Done'?'d':st==='Overdue'?'r':'o') + '">' + st + '</span>' +
+        (ap.completed ? '<span class="ap dn">✓Done</span>' : '') +
+      '</div></div>';
+  }).join('');
+  const cc = nc===2?'c2':nc===3?'c3':'';
+  doc.innerHTML = '<div class="db">' +
+    '<div class="dh"><div><div class="don">Velammal Knowledge Park · Minutes of Meeting</div><div class="dtit">' + eh(m.title) + '</div></div>' +
+    '<div class="dm"><div class="ddb">📅 ' + ds + ' · ' + (m.day||'') + '</div><div class="dml">' + eh(m.campus||'') + ' · ' + eh(m.category||'') + '</div></div></div>' +
+    '<div class="dgl"></div>' +
+    '<div class="dcw ' + cc + '"><div class="mg">' + (ah || '<div style="color:var(--slate);font-style:italic;font-size:12px;padding:8px 0">No action points yet.</div>') + '</div></div>' +
+    '<div class="dfl"><span>Prepared by: ' + (currentProfile?.full_name || '') + '</span><span>Director Sir Review — ' + ds + '</span></div>' +
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// SUMMARY VIEW
+// ═══════════════════════════════════════════════════════
+async function rsum() {
+  const g = document.getElementById('sgrid');
+  const isAdmin = currentProfile?.role === 'admin';
+  document.getElementById('scnt').textContent = meetings.length + ' meetings recorded';
+  if (!meetings.length) { g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--slate);font-style:italic">No meetings yet.</div>'; return; }
+
+  // Group by date
+  const byDate = {};
+  [...meetings].sort((a,b) => (b.date||'').localeCompare(a.date||'')).forEach(m => {
+    const d = m.date || '—';
+    if (!byDate[d]) byDate[d] = { day: m.day, meetings: [] };
+    byDate[d].meetings.push(m);
+  });
+
+  let out = '';
+  for (const [date, grp] of Object.entries(byDate)) {
+    out += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:14px;margin-top:8px;margin-bottom:4px">
+      <div style="background:var(--gh);border-radius:10px;padding:10px 18px;display:flex;flex-direction:column;flex-shrink:0;box-shadow:0 2px 10px rgba(0,95,115,.25)">
+        <div style="font-family:var(--fd);font-size:18px;color:#fff;line-height:1.1">${date!=='—'?fdf(date):'No Date'}</div>
+        <div style="font-size:10px;color:rgba(148,210,189,.85);letter-spacing:.1em;text-transform:uppercase">${grp.day||''}</div>
+      </div>
+      <span style="font-size:11px;font-weight:600;color:var(--pb2)">${grp.meetings.length} meeting${grp.meetings.length!==1?'s':''}</span>
+      <button onclick="openDayModal('${date}')" style="flex-shrink:0;padding:5px 12px;background:var(--pb2);border:none;border-radius:6px;color:#fff;font-family:var(--fb);font-size:11px;font-weight:500;cursor:pointer">📋 Full Day View</button>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,#d0e8ed,transparent)"></div>
+    </div>`;
+    grp.meetings.forEach(m => {
+      const aps = actionPoints[m.id] || [];
+      const done = aps.filter(a => a.completed || a.status==='Done').length;
+      const crit = aps.filter(a => a.priority==='Critical').length;
+      const apRows = aps.filter(a => a.text).map(a => {
+        const st = a.completed?'Done':(a.status||'Open');
+        const stDot = {'Open':'#0a9396','In Progress':'#7c5cbf','Done':'#1a9e5c','Overdue':'#e03636','Deferred':'#94a3b8'};
+        const fus = followUps[a.id] || [];
+        const fuHtml = fus.length > 0
+          ? '<div style="margin:4px 0 6px 18px;display:flex;flex-direction:column;gap:4px">' +
+            fus.map((fu, fi) =>
+              '<div style="display:flex;gap:8px;align-items:flex-start">' +
+              '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:3px"><div style="width:1px;height:6px;background:#94d2bd"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--pb4);flex-shrink:0"></div></div>' +
+              '<div style="flex:1;background:#f0fbf8;border:1px solid #c8ede6;border-left:2px solid var(--pb4);border-radius:0 6px 6px 0;padding:4px 9px">' +
+              '<div style="font-size:9px;font-weight:600;color:var(--pb3);font-family:var(--fm);margin-bottom:2px">↪ Update ' + (fi+1) + (fu.date?' · '+fdf(fu.date):'') + ' — ' + eh(fu.added_by_name||'') + '</div>' +
+              '<div style="font-size:11px;color:#2a3d46;line-height:1.45">' + eh(fu.text) + '</div></div></div>'
+            ).join('') + '</div>' : '';
+        return `<div style="border-bottom:1px solid #f0f6f8;padding:5px 0">
+          <div style="display:flex;align-items:flex-start;gap:6px">
+            <span style="font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;flex-shrink:0;margin-top:2px;${a.type==='Immediate'?'background:rgba(244,114,43,.1);color:#c05018;border:1px solid rgba(244,114,43,.25)':'background:rgba(124,92,191,.08);color:#5a3fa0;border:1px solid rgba(124,92,191,.18)'}">
+              ${a.type==='Immediate'?'⚡Imm':'📋LT'}
+            </span>
+            <div style="flex:1;font-size:11.5px;color:#2a3d46;line-height:1.4">${eh(a.text)}</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-top:1px">
+              ${a.assigned_to?`<span style="font-size:9px;color:var(--pb2);font-weight:500">${eh(a.assigned_to.slice(0,14))}</span>`:''}
+              <span style="width:7px;height:7px;border-radius:50%;background:${stDot[st]||'#94a3b8'};flex-shrink:0" title="${st}"></span>
+            </div>
+          </div>${fuHtml}</div>`;
+      }).join('');
+      out += `<div class="mc" onclick="openMeeting('${m.id}')">
+        <div class="mch"><div class="mct">${eh(m.category||'Untitled')}</div><div class="mcm"><span>${eh(m.campus||'')}</span></div></div>
+        <div class="mcb">${apRows||'<div style="font-size:11.5px;color:var(--slate);font-style:italic">No action points</div>'}</div>
+        <div class="mcf">
+          <span class="mci">${m.updated_at?new Date(m.updated_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</span>
+          <div style="display:flex;gap:5px">
+            ${isAdmin ? `<div class="bi danger" title="Delete" onclick="event.stopPropagation();delMeeting('${m.id}')">🗑</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+  g.innerHTML = out;
+}
+
+async function openMeeting(id) {
+  // Load APs if not cached
+  if (!actionPoints[id]) await loadMeetingAPs(id);
+  sv('entry', document.querySelector('.nt'));
+  await loadMeeting(id);
+}
+
+// ═══════════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════════
+function ds() {
+  const q = document.getElementById('srch').value.toLowerCase().trim();
+  const res = document.getElementById('sres');
+  const allAPs = Object.entries(actionPoints).flatMap(([mid, aps]) => {
+    const m = meetings.find(x => x.id === mid);
+    return aps.map(a => ({ ...a, _m: m }));
+  });
+  let filtered = searchFilter === 'all' ? meetings : meetings.filter(m => (m.category||'').toLowerCase().includes(searchFilter.toLowerCase()));
+  if (q) filtered = filtered.filter(m =>
+    (m.title||'').toLowerCase().includes(q) || (m.campus||'').toLowerCase().includes(q) ||
+    (m.category||'').toLowerCase().includes(q) || (m.date||'').includes(q) ||
+    (actionPoints[m.id]||[]).some(a => (a.text||'').toLowerCase().includes(q) || (a.assigned_to||'').toLowerCase().includes(q))
+  );
+  if (!q && searchFilter === 'all') { res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--slate);font-style:italic">Type to search…</div>'; return; }
+  if (!filtered.length) { res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--slate);font-style:italic">No results.</div>'; return; }
+  res.innerHTML = filtered.map(m => {
+    const ma = (actionPoints[m.id]||[]).filter(a => !q||(a.text||'').toLowerCase().includes(q)||(a.assigned_to||'').toLowerCase().includes(q));
+    return `<div class="src-c" onclick="openMeeting('${m.id}')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-weight:600;color:var(--pb1)">${eh(m.title||'Untitled')}</div><div style="font-size:11px;color:var(--slate);font-family:var(--fm)">${m.date||'—'}</div></div>
+      <div style="display:flex;gap:7px;margin-bottom:7px;flex-wrap:wrap">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:linear-gradient(90deg,#e0f4f7,#f0fbfa);border:1px solid #b8dde5;color:var(--pb2)">📍 ${eh(m.campus||'')}</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:linear-gradient(90deg,#e0f4f7,#f0fbfa);border:1px solid #b8dde5;color:var(--pb2)">🏷 ${eh(m.category||'')}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--slate);line-height:1.6">${ma.slice(0,2).map(a=>'· '+eh(a.text||'')).join('<br>')||'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function tf(cat, el) { searchFilter = cat; document.querySelectorAll('.fc').forEach(c => c.classList.remove('active')); el.classList.add('active'); ds(); }
+
+// ═══════════════════════════════════════════════════════
+// ADMIN PANEL
+// ═══════════════════════════════════════════════════════
+async function loadAdmin() {
+  if (currentProfile?.role !== 'admin') return;
+
+  // Load users
+  const { data: profiles } = await sb.from('profiles').select('*, auth_users:id(email)').order('created_at');
+  const { data: authData } = await sb.rpc('get_users_email') || { data: [] };
+
+  // We need emails — use admin API or join
+  const { data: users } = await sb.from('profiles').select('*').order('created_at');
+
+  document.getElementById('user-table-body').innerHTML = (users || []).map(u => `
+    <tr>
+      <td><strong>${eh(u.full_name)}</strong></td>
+      <td><span class="role-badge ${u.role}">${u.role}</span></td>
+      <td><span class="status-dot ${u.is_active?'active':'inactive'}"></span>${u.is_active?'Active':'Inactive'}</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        ${u.id !== currentUser.id ? `
+          <select onchange="changeRole('${u.id}',this.value)" style="font-size:11px;padding:3px 6px;border:1px solid #d0e4ea;border-radius:5px;background:#fff;cursor:pointer">
+            <option value="viewer" ${u.role==='viewer'?'selected':''}>Viewer</option>
+            <option value="editor" ${u.role==='editor'?'selected':''}>Editor</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+          </select>
+          <button class="btn-xs ${u.is_active?'danger':'success'}" onclick="toggleActive('${u.id}',${u.is_active})">${u.is_active?'Deactivate':'Activate'}</button>
+        ` : '<span style="font-size:11px;color:var(--slate);font-style:italic">You</span>'}
+      </td>
+    </tr>`).join('');
+
+  // Load audit log
+  const { data: logs } = await sb.from('audit_log').select('*').order('created_at', {ascending: false}).limit(30);
+  const actColor = { insert: 'insert', update: 'update', delete: 'delete' };
+  document.getElementById('audit-list').innerHTML = (logs || []).length
+    ? (logs || []).map(l => `
+        <div class="audit-item">
+          <span class="audit-badge ${actColor[l.action]||'update'}">${(l.action||'').toUpperCase()}</span>
+          <div style="flex:1;font-size:11.5px;color:#2a3d46">${eh(l.user_name||'Unknown')} — ${eh(l.table_name||'')} ${l.details?.title?'· '+eh(l.details.title):''}</div>
+          <span class="audit-time">${l.created_at?new Date(l.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):''}</span>
+        </div>`).join('')
+    : '<div style="text-align:center;padding:20px;color:var(--slate);font-style:italic">No audit records yet</div>';
+}
+
+async function changeRole(userId, newRole) {
+  const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
+  if (error) { tt('Error: ' + error.message); return; }
+  await logAudit('update', 'profiles', userId, { role: newRole });
+  tt('✓ Role updated to ' + newRole);
+  await loadAdmin();
+}
+
+async function toggleActive(userId, currentlyActive) {
+  const { error } = await sb.from('profiles').update({ is_active: !currentlyActive }).eq('id', userId);
+  if (error) { tt('Error: ' + error.message); return; }
+  await logAudit('update', 'profiles', userId, { is_active: !currentlyActive });
+  tt('✓ User ' + (currentlyActive ? 'deactivated' : 'activated'));
+  await loadAdmin();
+}
+
+async function inviteUser() {
+  const name = document.getElementById('inv-name').value.trim();
+  const email = document.getElementById('inv-email').value.trim();
+  const role = document.getElementById('inv-role').value;
+  if (!name || !email) { tt('Please fill in name and email'); return; }
+
+  // Use Supabase admin invite
+  const { error } = await sb.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: name, role }
+  });
+  if (error) {
+    // Fallback: create via signup with temp password
+    const tempPass = 'VKP@' + Math.random().toString(36).slice(2,10).toUpperCase();
+    const { data, error: e2 } = await sb.auth.admin.createUser({
+      email, password: tempPass,
+      email_confirm: true,
+      user_metadata: { full_name: name, role }
+    });
+    if (e2) { tt('Error: ' + e2.message); return; }
+    await sb.from('profiles').update({ role, full_name: name }).eq('id', data.user.id);
+    tt(`✓ User created. Temp password: ${tempPass} — Share securely!`);
+  } else {
+    tt('✓ Invitation sent to ' + email);
+  }
+  document.getElementById('inv-name').value = '';
+  document.getElementById('inv-email').value = '';
+  await logAudit('insert', 'profiles', null, { email, role });
+  await loadAdmin();
+}
+
+async function lockOldMeetings() {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  const { error } = await sb.from('meetings').update({ locked: true })
+    .lt('date', cutoff.toISOString().slice(0,10));
+  if (error) { tt('Error: ' + error.message); return; }
+  await loadAllMeetings();
+  tt('✓ Old meetings locked');
+}
+
+async function purgeOldMeetings() {
+  if (!confirm('Permanently delete all meetings older than 1 year? This CANNOT be undone.')) return;
+  const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear() - 1);
+  const { error } = await sb.from('meetings').delete().lt('date', cutoff.toISOString().slice(0,10));
+  if (error) { tt('Error: ' + error.message); return; }
+  await loadAllMeetings();
+  tt('✓ Old meetings purged');
+}
+
+async function exportAllData() {
+  const { data: allMeetings } = await sb.from('meetings').select('*');
+  const { data: allAPs } = await sb.from('action_points').select('*');
+  const { data: allFUs } = await sb.from('follow_ups').select('*');
+  const blob = new Blob([JSON.stringify({ meetings: allMeetings, action_points: allAPs, follow_ups: allFUs }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'VKP_MOM_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  tt('✓ Full backup exported');
+}
+
+async function logAudit(action, table, recordId, details) {
+  try {
+    await sb.from('audit_log').insert({
+      user_id: currentUser?.id, user_name: currentProfile?.full_name || currentUser?.email,
+      action, table_name: table, record_id: recordId, details
+    });
+  } catch(e) { /* silent */ }
+}
+
+// ═══════════════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════════════
+async function ba() {
+  // Load all APs if not cached
+  for (const m of meetings) {
+    if (!actionPoints[m.id]) await loadMeetingAPs(m.id);
+  }
+  const all = meetings.flatMap(m => (actionPoints[m.id]||[]).map(a => ({...a, _m: m})));
+  document.getElementById('asub').textContent = meetings.length + ' meetings · ' + all.length + ' action items · ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+  const dn = all.filter(a => a.completed||a.status==='Done').length;
+  const cr = all.filter(a => a.priority==='Critical').length;
+  const td = new Date(); td.setHours(0,0,0,0);
+  const ov = all.filter(a => a.timeline&&new Date(a.timeline)<td&&!a.completed&&a.status!=='Done').length;
+  const rt = all.length > 0 ? Math.round(dn/all.length*100) : 0;
+
+  document.getElementById('kpr').innerHTML =
+    `<div class="kpc t" onclick="dd('Meetings','All meetings',meetings.map(m=>({t:m.title||'Untitled',s:m.date+' · '+m.campus})))"><div style="font-size:20px;margin-bottom:5px">📋</div><div class="kpv">${meetings.length}</div><div class="kpl">Total Meetings</div></div>
+    <div class="kpc go"><div style="font-size:20px;margin-bottom:5px">⚡</div><div class="kpv">${all.length}</div><div class="kpl">Action Items</div></div>
+    <div class="kpc gr"><div style="font-size:20px;margin-bottom:5px">✅</div><div class="kpv">${rt}%</div><div class="kpl">Completion Rate</div><span class="kpt ${rt>=60?'up':'dn'}">${rt>=60?'↑':'↓'} ${rt}%</span></div>
+    <div class="kpc rd"><div style="font-size:20px;margin-bottom:5px">🔴</div><div class="kpv">${cr}</div><div class="kpl">Critical Items</div></div>
+    <div class="kpc pu"><div style="font-size:20px;margin-bottom:5px">⏰</div><div class="kpv">${ov}</div><div class="kpl">Overdue</div>${ov>0?'<span class="kpt dn">Action Needed</span>':''}</div>`;
+
+  const i3 = new Date(td); i3.setDate(td.getDate()+3);
+  const ovl = all.filter(a => a.timeline&&new Date(a.timeline)<td&&!a.completed&&a.status!=='Done');
+  const upl = all.filter(a => {if(!a.timeline)return false;const d=new Date(a.timeline);d.setHours(0,0,0,0);return d>=td&&d<=i3&&!a.completed&&a.status!=='Done';});
+  const ala = [...ovl.map(a=>({tp:'ov',tx:a.text,mn:a._m.title,dt:a.timeline})),...upl.map(a=>({tp:'up',tx:a.text,mn:a._m.title,dt:a.timeline}))];
+  document.getElementById('alist').innerHTML = ala.length
+    ? ala.slice(0,10).map(al=>`<div class="ai ${al.tp}"><span style="font-size:13px;flex-shrink:0">${al.tp==='ov'?'🔴':'🟡'}</span><div style="font-size:11.5px;flex:1"><strong>${eh(al.tx.slice(0,70))}…</strong> — ${eh(al.mn)}</div><span class="aib ${al.tp}">${al.tp==='ov'?'Overdue':fdf(al.dt)}</span></div>`).join('')
+    : '<div style="color:var(--slate);font-style:italic;font-size:12px;padding:8px 0">✓ No alerts</div>';
+
+  function dc(k){if(charts[k]){charts[k].destroy();delete charts[k]}}
+  const GC=['#005f73','#0a9396','#3dbdc0','#94d2bd','#c9a84c','#e8d5a3','#1a9e5c','#7c5cbf','#e03636','#f4722b'];
+
+  const pg={Critical:0,High:0,Medium:0,Low:0};all.forEach(a=>{if(pg[a.priority]!==undefined)pg[a.priority]++});
+  dc('pri');charts.pri=new Chart(document.getElementById('cpri').getContext('2d'),{type:'doughnut',data:{labels:Object.keys(pg),datasets:[{data:Object.values(pg),backgroundColor:['#e03636','#f4722b','#c9a84c','#1a9e5c'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+  const sg2={Open:0,'In Progress':0,Done:0,Overdue:0,Deferred:0};all.forEach(a=>{const s=a.completed?'Done':(a.status||'Open');if(sg2[s]!==undefined)sg2[s]++});
+  dc('sta');charts.sta=new Chart(document.getElementById('csta').getContext('2d'),{type:'doughnut',data:{labels:Object.keys(sg2),datasets:[{data:Object.values(sg2),backgroundColor:['#0a9396','#7c5cbf','#1a9e5c','#e03636','#94a3b8'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+  const tf2={Immediate:0,'Long-term':0};all.forEach(a=>{const t=a.type||'Immediate';if(tf2[t]!==undefined)tf2[t]++});
+  dc('tf');charts.tf=new Chart(document.getElementById('ctf').getContext('2d'),{type:'doughnut',data:{labels:['⚡ Immediate','📋 Long-term'],datasets:[{data:[tf2.Immediate,tf2['Long-term']],backgroundColor:['#005f73','#94d2bd'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+  const cg={};meetings.forEach(m=>{const c=m.category||'Other';if(!cg[c])cg[c]={total:0,done:0};(actionPoints[m.id]||[]).forEach(a=>{cg[c].total++;if(a.completed||a.status==='Done')cg[c].done++;})});
+  const cl=Object.keys(cg),ct=cl.map(k=>cg[k].total),cd=cl.map(k=>cg[k].done);
+  dc('cat');charts.cat=new Chart(document.getElementById('ccat').getContext('2d'),{type:'bar',data:{labels:cl,datasets:[{label:'Total',data:ct,backgroundColor:GC.slice(0,cl.length),borderRadius:5,borderSkipped:false},{label:'Done',data:cd,backgroundColor:'rgba(26,158,92,.5)',borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#e2edf0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10}}}},plugins:{legend:{labels:{font:{size:11},boxWidth:12}}}}});
+  const stop=new Set(['the','and','to','a','of','in','for','is','on','with','are','at','by','an','or','be','this','that','from','was','it','has','not','have','will','as','we','all','they','do','if','check','per','our','their','how','who','its','sir','mam','been','get','new','staff','students','campus','school','should','need','must','also','meet','from','each','every']);
+  const wm={};all.forEach(a=>(a.text||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).forEach(w=>{if(w.length>3&&!stop.has(w)){if(!wm[w])wm[w]=[];wm[w].push(a);}}));
+  const th=Object.entries(wm).filter(([,v])=>v.length>=2).sort((a,b)=>b[1].length-a[1].length).slice(0,10);
+  const mf=th[0]?.[1]||1;
+  document.getElementById('thlist').innerHTML=th.length?th.map(([w,aps])=>`<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-size:12px;font-weight:500;color:var(--pb1);text-transform:capitalize">${eh(w)}</div><div style="width:75px;height:5px;background:#e2edf0;border-radius:3px;overflow:hidden"><div style="width:${Math.round(aps.length/mf*100)}%;height:100%;background:var(--gh);border-radius:3px"></div></div><div style="font-size:10.5px;font-weight:700;color:var(--pb2);min-width:18px;text-align:right">${aps.length}</div></div>`).join(''):'<div style="color:var(--slate);font-style:italic;font-size:12px">Add more data to detect themes.</div>';
+  const cd2={};meetings.forEach(m=>{const c=m.campus||'Unknown';if(!cd2[c])cd2[c]={total:0,done:0,critical:0,overdue:0};(actionPoints[m.id]||[]).forEach(a=>{cd2[c].total++;if(a.completed||a.status==='Done')cd2[c].done++;if(a.priority==='Critical')cd2[c].critical++;if(a.timeline&&new Date(a.timeline)<td&&!a.completed&&a.status!=='Done')cd2[c].overdue++;});});
+  document.getElementById('camptb').innerHTML=Object.entries(cd2).sort((a,b)=>b[1].total-a[1].total).map(([c,d])=>{const r=d.total>0?Math.round(d.done/d.total*100):0;const col=r>=70?'#1a9e5c':r>=40?'#c9a84c':'#e03636';return`<tr><td>${eh(c)}</td><td>${d.total}</td><td>${d.done}</td><td><span class="rp2" style="background:${col}22;color:${col}">${r}%</span></td><td>${d.critical>0?`<span style="color:var(--red);font-weight:600">${d.critical}</span>`:'0'}</td><td>${d.overdue>0?`<span style="color:var(--red);font-weight:600">${d.overdue}</span>`:'0'}</td></tr>`}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--slate);font-style:italic">No data</td></tr>';
+  const wd={};all.forEach(a=>{const w=(a.assigned_to||'').trim()||'Unassigned';if(!wd[w])wd[w]={total:0,done:0};wd[w].total++;if(a.completed||a.status==='Done')wd[w].done++;});
+  const wm2=Math.max(...Object.values(wd).map(d=>d.total),1);
+  document.getElementById('wltb').innerHTML=Object.entries(wd).sort((a,b)=>b[1].total-a[1].total).slice(0,15).map(([w,d])=>`<tr><td>${eh(w)}</td><td>${d.total}</td><td>${d.done}</td><td><div class="wb"><div class="wbf" style="width:${Math.round(d.total/wm2*100)}%"></div></div></td></tr>`).join('')||'<tr><td colspan="4" style="color:var(--slate);font-style:italic">No data</td></tr>';
+  const dc3={};meetings.forEach(m=>{if(m.date)dc3[m.date]=(dc3[m.date]||0)+1;});const sd=Object.keys(dc3).sort();
+  dc('tim');const tlc=document.getElementById('ctim').getContext('2d');const tg=tlc.createLinearGradient(0,0,0,200);tg.addColorStop(0,'rgba(0,95,115,.75)');tg.addColorStop(1,'rgba(61,189,192,.1)');
+  charts.tim=new Chart(tlc,{type:'line',data:{labels:sd.map(d=>fdf(d)),datasets:[{label:'Meetings',data:sd.map(d=>dc3[d]),fill:true,backgroundColor:tg,borderColor:'#0a9396',borderWidth:2,tension:.4,pointBackgroundColor:'#005f73',pointRadius:5,pointHoverRadius:7}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#e2edf0'},ticks:{font:{size:10},stepSize:1}},x:{grid:{display:false},ticks:{font:{size:10}}}},plugins:{legend:{labels:{font:{size:11},boxWidth:12}}}}});
+}
+
+// ═══════════════════════════════════════════════════════
+// DAY MODAL
+// ═══════════════════════════════════════════════════════
+async function openDayModal(date) {
+  const dayMs = meetings.filter(m => m.date === date);
+  if (!dayMs.length) return;
+  for (const m of dayMs) { if (!actionPoints[m.id]) await loadMeetingAPs(m.id); }
+  const day = dayMs[0].day || '';
+  const stCol={'Open':'#0a9396','In Progress':'#7c5cbf','Done':'#1a9e5c','Overdue':'#e03636','Deferred':'#94a3b8'};
+  const priCol={Critical:'#b91c1c',High:'#b94a10',Medium:'#8b6914',Low:'#127548'};
+  const totalAPs = dayMs.reduce((n,m) => n+(actionPoints[m.id]||[]).length, 0);
+  document.getElementById('drt').textContent = fdf(date) + ' — ' + day;
+  document.getElementById('drs').textContent = dayMs.length + ' meetings · ' + totalAPs + ' action points';
+  document.getElementById('dri').innerHTML = dayMs.map(m => {
+    const aps = actionPoints[m.id] || [];
+    const done = aps.filter(a => a.completed||a.status==='Done').length;
+    const rate = aps.length > 0 ? Math.round(done/aps.length*100) : 0;
+    const rc = rate>=70?'#1a9e5c':rate>=40?'#c9a84c':'#e03636';
+    const apRows = aps.filter(a => a.text).map(a => {
+      const st = a.completed?'Done':(a.status||'Open');
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #f2f7f8">
+        <span style="font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;flex-shrink:0;margin-top:2px;${a.type==='Immediate'?'background:rgba(244,114,43,.1);color:#c05018;border:1px solid rgba(244,114,43,.25)':'background:rgba(124,92,191,.08);color:#5a3fa0;border:1px solid rgba(124,92,191,.2)'}">
+          ${a.type==='Immediate'?'⚡Imm':'📋LT'}
+        </span>
+        <div style="flex:1"><div style="font-size:12px;color:#2a3d46;line-height:1.4">${eh(a.text)}</div>
+          ${a.assigned_to?`<div style="font-size:9.5px;color:var(--pb2);margin-top:2px">👤 ${eh(a.assigned_to)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <span style="font-size:8px;font-weight:600;padding:2px 6px;border-radius:10px;background:${stCol[st]||'#94a3b8'}22;color:${stCol[st]||'#94a3b8'}">${st}</span>
+          <span style="font-size:8px;font-weight:600;padding:2px 6px;border-radius:10px;background:${priCol[a.priority]||'#94a3b8'}22;color:${priCol[a.priority]||'#94a3b8'}">${a.priority}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="dric" style="margin-bottom:12px;cursor:pointer" onclick="openMeeting('${m.id}');cdm()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="drit">${eh(m.category||'Untitled')} <span style="font-size:10px;color:var(--slate);font-weight:400">· ${eh(m.campus||'')}</span></div>
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${rc}22;color:${rc}">${rate}%</span>
+      </div>
+      ${apRows||'<div style="font-size:11px;color:var(--slate);font-style:italic">No action points</div>'}
+    </div>`;
+  }).join('');
+  document.getElementById('dro').classList.add('show');
+}
+function cdm(e) { if (!e || e.target === document.getElementById('dro')) document.getElementById('dro').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════════
+// CHATBOT
+// ═══════════════════════════════════════════════════════
+let chatOpen2 = false;
+function toggleChat() {
+  chatOpen2 = !chatOpen2;
+  const p = document.getElementById('chat-panel');
+  p.style.display = chatOpen2 ? 'flex' : 'none';
+  if (chatOpen2 && !document.getElementById('chat-msgs').children.length) {
+    addChatMsg('bot', 'Hi! Ask me about any action points, persons, or meetings. Try:\n- Rajesh Sir items\n- What is overdue?\n- Competition meetings\n- Jeya Priya Mam tasks');
+  }
+  if (chatOpen2) setTimeout(() => document.getElementById('chat-input').focus(), 50);
+}
+
+function addChatMsg(role, text, cards) {
+  const msgs = document.getElementById('chat-msgs');
+  const isBot = role === 'bot';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:6px;align-items:flex-start;margin-bottom:2px;' + (isBot ? '' : 'flex-direction:row-reverse');
+  const avatar = isBot ? '<div style="width:26px;height:26px;background:var(--gh);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px">🤖</div>' : '';
+  const bubble = document.createElement('div');
+  bubble.style.cssText = 'max-width:88%;display:flex;flex-direction:column;gap:5px;';
+  if (text) {
+    const tb = document.createElement('div');
+    tb.style.cssText = 'padding:8px 12px;border-radius:' + (isBot ? '4px 12px 12px 12px' : '12px 4px 12px 12px') + ';font-size:12px;line-height:1.55;white-space:pre-wrap;' + (isBot ? 'background:#f0f8fa;border:1px solid #d0e8ed;color:#1a2a33;' : 'background:var(--gh);color:#fff;');
+    tb.textContent = text;
+    bubble.appendChild(tb);
+  }
+  if (cards?.length) {
+    cards.forEach(c => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#fff;border:1px solid #cce8ed;border-left:3px solid var(--pb3);border-radius:4px 8px 8px 4px;padding:7px 10px;cursor:pointer;transition:all .15s;';
+      card.onmouseenter = () => card.style.background = '#f0f8fa';
+      card.onmouseleave = () => card.style.background = '#fff';
+      card.innerHTML = `<div style="font-size:11.5px;font-weight:500;color:#1a2a33;line-height:1.4;margin-bottom:3px">${eh(c.text)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:9.5px;font-family:monospace;color:var(--pb3)">${eh(c.date)}</span>
+          <span style="font-size:9.5px;color:var(--slate)">· ${eh(c.campus)} · ${eh(c.category)}</span>
+          ${c.assignedTo?`<span style="font-size:9.5px;color:var(--pb2)">👤 ${eh(c.assignedTo)}</span>`:''}
+          <span style="font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;margin-left:auto;background:${c.stBg};color:${c.stCol}">${eh(c.status)}</span>
+        </div>
+        <div style="font-size:9px;color:var(--pb4);margin-top:3px">↗ Click to open meeting</div>`;
+      card.onclick = () => { toggleChat(); openMeeting(c.meetingId); };
+      bubble.appendChild(card);
+    });
+  }
+  wrap.innerHTML = avatar;
+  wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const q = (inp.value || '').trim();
+  if (!q) return;
+  inp.value = '';
+  addChatMsg('user', q);
+  setTimeout(() => answerChat(q), 200);
+}
+
+async function answerChat(q) {
+  for (const m of meetings) { if (!actionPoints[m.id]) await loadMeetingAPs(m.id); }
+  const all = meetings.flatMap(m => (actionPoints[m.id]||[]).map(a => ({...a, _m: m})));
+  const stC = {'Open':'#0a9396','In Progress':'#7c5cbf','Done':'#1a9e5c','Overdue':'#e03636','Deferred':'#94a3b8'};
+  const stB = {'Open':'rgba(10,147,150,.1)','In Progress':'rgba(124,92,191,.12)','Done':'rgba(26,158,92,.1)','Overdue':'rgba(224,54,54,.1)','Deferred':'rgba(100,116,139,.1)'};
+  const priC = {Critical:'#b91c1c',High:'#b94a10',Medium:'#8b6914',Low:'#127548'};
+  const priB = {Critical:'rgba(224,54,54,.1)',High:'rgba(244,114,43,.1)',Medium:'rgba(201,168,76,.13)',Low:'rgba(26,158,92,.08)'};
+
+  function toCards(results) {
+    return results.slice(0,12).map(a => {
+      const st = a.completed?'Done':(a.status||'Open');
+      const pri = a.priority||'Medium';
+      return { text:a.text, date:a._m.date||'—', campus:a._m.campus||'', category:a._m.category||'',
+        assignedTo:a.assigned_to||'', status:st, priority:pri,
+        stCol:stC[st]||'#94a3b8', stBg:stB[st]||'rgba(100,116,139,.1)',
+        priCol:priC[pri]||'#64748b', priBg:priB[pri]||'rgba(100,116,139,.08)',
+        meetingId:a._m.id };
+    });
+  }
+
+  let results = [], intro = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (/overdue/i.test(q)) {
+    results = all.filter(a => a.timeline&&new Date(a.timeline)<today&&!a.completed&&a.status!=='Done');
+    intro = results.length ? results.length+' overdue item'+(results.length>1?'s':'')+' — click to open:' : 'No overdue items. ✓';
+  } else if (/critical/i.test(q)) {
+    results = all.filter(a => a.priority==='Critical');
+    intro = results.length+' critical item'+(results.length!==1?'s':'')+ ':';
+  } else if (/done|complet/i.test(q)) {
+    results = all.filter(a => a.completed||a.status==='Done');
+    intro = results.length+' completed item'+(results.length!==1?'s':'')+ ':';
+  } else if (/open|pending/i.test(q)) {
+    results = all.filter(a => !a.completed&&a.status!=='Done');
+    intro = results.length+' open item'+(results.length!==1?'s':'')+ ':';
+  } else {
+    const words = q.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w => w.length>1);
+    results = all.filter(a => words.some(w =>
+      (a.text||'').toLowerCase().includes(w)||(a.assigned_to||'').toLowerCase().includes(w)||
+      (a._m.campus||'').toLowerCase().includes(w)||(a._m.category||'').toLowerCase().includes(w)||
+      (a._m.title||'').toLowerCase().includes(w)
+    ));
+    intro = results.length
+      ? 'Found '+results.length+' result'+(results.length!==1?'s':'')+' for "'+q+'" across '+[...new Set(results.map(a=>a._m.date))].length+' day'+(results.length!==1?'s':'')+' — click to open:'
+      : 'Nothing found for "'+q+'". Try a name, campus, or keyword.';
+  }
+  if (!results.length) { addChatMsg('bot', intro); return; }
+  const overflow = results.length > 12 ? '\n…and '+(results.length-12)+' more.' : '';
+  addChatMsg('bot', intro+overflow, toCards(results));
+}
+
+// ═══════════════════════════════════════════════════════
+// IMPORT / TEMPLATE
+// ═══════════════════════════════════════════════════════
+let _impPendingData = [];
+function trigImp() { document.getElementById('imp-file').click(); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('imp-drop').style.borderColor=''; const file=e.dataTransfer.files[0]; if(file)processImpFile(file); }
+function handleImpFile(input) { const file=input.files[0]; input.value=''; if(file){openImp();processImpFile(file);} }
+function openImp() { const o=document.getElementById('imp-overlay'); o.style.display='flex'; document.getElementById('imp-status').style.display='none'; document.getElementById('imp-preview').style.display='none'; _impPendingData=[]; }
+function closeImp(e) { if(!e||e.target===document.getElementById('imp-overlay')) document.getElementById('imp-overlay').style.display='none'; }
+function setImpStatus(msg,type) { const el=document.getElementById('imp-status'); el.style.display='block'; el.textContent=msg; el.style.background=type==='error'?'#fef2f2':type==='ok'?'#f0fdf4':'#f0f8fa'; el.style.border='1px solid '+(type==='error'?'#fca5a5':type==='ok'?'#86efac':'#b8dde5'); el.style.color=type==='error'?'#b91c1c':type==='ok'?'#166534':'#005f73'; }
+
+async function processImpFile(file) {
+  setImpStatus('⏳ Reading file…','info');
+  document.getElementById('imp-preview').style.display='none';
+  _impPendingData=[];
+  try {
+    const ext=file.name.split('.').pop().toLowerCase();
+    let rows=[];
+    if(ext==='docx') rows=await parseDocx(file);
+    else if(ext==='xlsx'||ext==='xls') rows=await parseXlsx(file);
+    else { setImpStatus('✗ Unsupported file type','error'); return; }
+    if(!rows.length){setImpStatus('✗ No data rows found','error');return;}
+    _impPendingData=buildMeetingsFromRows(rows,file.name);
+    if(!_impPendingData.length){setImpStatus('✗ Could not extract meetings. Check column format.','error');return;}
+    const total=_impPendingData.reduce((n,m)=>n+m.actionPoints.length,0);
+    setImpStatus('✓ Found '+_impPendingData.length+' meetings · '+total+' action points ready to import','ok');
+    document.getElementById('imp-preview').style.display='block';
+    document.getElementById('imp-preview-list').innerHTML=_impPendingData.map(m=>
+      `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fdfd;border:1px solid #d0e8ed;border-radius:7px;font-size:12px">
+        <div style="font-family:var(--fm);font-size:10px;color:var(--pb3);flex-shrink:0">${m.date}</div>
+        <div style="flex:1;font-weight:500;color:var(--pb1)">${eh(m.title)}</div>
+        <div style="background:var(--pb2);color:#fff;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0">${m.actionPoints.length} APs</div>
+      </div>`).join('');
+  } catch(e) { setImpStatus('✗ Error: '+e.message,'error'); console.error(e); }
+}
+
+async function confirmImport() {
+  if (!_impPendingData.length) return;
+  setImpStatus('⏳ Importing to cloud…','info');
+  let imported = 0;
+  for (const m of _impPendingData) {
+    const { data: meeting, error } = await sb.from('meetings').insert({
+      title: m.title, date: m.date, day: m.day, campus: m.campus, category: m.category,
+      created_by: currentUser.id, modified_by: currentUser.id
+    }).select().single();
+    if (error) { console.error(error); continue; }
+    meetings.unshift(meeting);
+    // Insert action points
+    if (m.actionPoints.length > 0) {
+      const aps = m.actionPoints.map((ap, i) => ({
+        meeting_id: meeting.id, type: ap.type, text: ap.text,
+        priority: ap.priority, status: ap.status, assigned_to: ap.assignedTo,
+        timeline: ap.timeline || null, completed: ap.completed, sort_order: i,
+        created_by: currentUser.id
+      }));
+      await sb.from('action_points').insert(aps);
+    }
+    imported++;
+  }
+  await logAudit('insert', 'meetings', null, { count: imported, source: 'import' });
+  closeImp();
+  tt('✓ Imported ' + imported + ' meetings to cloud');
+  await loadAllMeetings();
+  sv('sum', document.querySelectorAll('.nt')[1]);
+}
+
+// Reuse parsers from local version (unchanged)
+async function parseDocx(file) {
+  if(typeof JSZip==='undefined')throw new Error('JSZip not loaded');
+  const ab=await file.arrayBuffer();const zip=await JSZip.loadAsync(ab);
+  const xmlFile=zip.file('word/document.xml');if(!xmlFile)throw new Error('Not a valid DOCX');
+  const xmlStr=await xmlFile.async('string');const parser=new DOMParser();const xmlDoc=parser.parseFromString(xmlStr,'application/xml');
+  const ns='http://schemas.openxmlformats.org/wordprocessingml/2006/main';const rows=[];const tables=xmlDoc.getElementsByTagNameNS(ns,'tbl');
+  for(const table of tables){const trows=table.getElementsByTagNameNS(ns,'tr');for(const tr of trows){const cells=tr.getElementsByTagNameNS(ns,'tc');const rowData=[];for(const tc of cells){const paras=tc.getElementsByTagNameNS(ns,'p');const lines=[];for(const p of paras){const texts=p.getElementsByTagNameNS(ns,'t');let line='';for(const t of texts)line+=t.textContent;if(line.trim())lines.push(line.trim());}rowData.push(lines.join('\n'));}if(rowData.length>0&&new Set(rowData).size>1)rows.push(rowData);else if(rowData.length>0&&new Set(rowData).size===1&&rowData[0])rows.push(rowData);}}
+  return rows;
+}
+
+async function parseXlsx(file) {
+  if(typeof XLSX==='undefined')throw new Error('XLSX not loaded');
+  const ab=await file.arrayBuffer();const wb=XLSX.read(ab,{type:'array',cellDates:true});const rows=[];
+  for(const sheetName of wb.SheetNames){const ws=wb.Sheets[sheetName];const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,dateNF:'yyyy-mm-dd'});for(const row of data){if(row.some(c=>c!==null&&c!==undefined&&String(c).trim()!==''))rows.push(row.map(c=>{if(c===null||c===undefined)return'';if(typeof c==='string')return c.trim();return String(c).trim();}));}}
+  return rows;
+}
+
+function buildMeetingsFromRows(rows, fileName) {
+  const CAT_MAP={'cashier meeting':'Finance / Fee','marketing / admission':'Marketing / Admission','marketing team meeting':'Marketing / Admission','academics':'Academics','grade 11 bridge course':'Academics','grade 12 practicals':'Academics','cbse circular':'Academics','grade 10 tc':'Admin','direct – karthikayan sir':'Admin','direct meeting':'Admin','direct sir meeting':'Admin','vcr':'Admin','pondicherry meetign minutes':'Admin','pondicherry meeting minutes':'Admin','iit / neet':'IIT / NEET','iit/neet':'IIT / NEET','competition':'Competition','eca –zonal head':'ECA','eca - zonal head':'ECA','eca':'ECA','staff / hr':'Staff / HR','infrastructure':'Infrastructure','finance / fee':'Finance / Fee','admin':'Admin'};
+  const CAMPUS_MAP={'all campus':'All Campus','all school':'All School','namakkal':'Namakkal','coimbatore':'Coimbatore','vbc  coimbatore':'Coimbatore','vbc coimbatore':'Coimbatore','vbc namakkal':'Namakkal','vellore':'Vellore','trichy':'Trichy','erode':'Erode','tondiarpet':'Tondiarpet','kallakurichi':'Kallakurichi','pondicherry':'Pondicherry','vbc pondicherry':'Pondicherry','central office':'Central Office','lavanya mam':'Central Office','sr. principal sir':'Central Office','sr. principal office':'Central Office'};
+  const normCat=s=>{const k=(s||'').toLowerCase().trim();return CAT_MAP[k]||s.trim();};
+  const normCamp=s=>{const k=(s||'').toLowerCase().trim();return CAMPUS_MAP[k]||(s.trim()||'All Campus');};
+  function pd(raw){if(!raw)return null;const s=String(raw).trim();if(!s)return null;if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;if(/^\d{5}$/.test(s)){const d=new Date((parseInt(s)-25569)*86400*1000);return d.toISOString().slice(0,10);}const dmy=s.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{2,4})$/);if(dmy){const yr=dmy[3].length===2?'20'+dmy[3]:dmy[3];return`${yr}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;}const wm=s.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);if(wm){const mo=MONTHS[wm[2].toLowerCase()];return`${wm[3]}-${mo}-${wm[1].padStart(2,'0')}`;}return null;}
+  function detectLayout(rows){for(const row of rows.slice(0,5)){const c0=(row[0]||'').toLowerCase().trim();const c2=(row[2]||'').toLowerCase().trim();if(c0==='date')return'template';if(pd(row[0])&&(c2.includes('immediate')||c2.includes('long')))return'template';if(c0==='type'&&(row[3]||'').toLowerCase().includes('action'))return'docx';}const fd=rows.find(r=>r.some(c=>c&&String(c).trim()));if(fd&&(pd(fd[0])||/^\d{5}$/.test(String(fd[0]||'').trim())))return'template';return'docx';}
+  const layout=detectLayout(rows);let currentDate=null,currentDay='';const rawItems=[];
+  for(const row of rows){if(!row.some(c=>c&&String(c).trim()))continue;if(layout==='template'){const c0=String(row[0]||'').trim(),c1=String(row[1]||'').trim(),c2=String(row[2]||'').trim(),c3=String(row[3]||'').trim(),c4=String(row[4]||'').trim(),c5=String(row[5]||'').trim(),c6=String(row[6]||'').trim(),c7=String(row[7]||'').trim(),c8=String(row[8]||'').trim(),c9=String(row[9]||'').trim();if(c0.toLowerCase()==='date'||c2.toLowerCase()==='type')continue;if(!c5)continue;const parsedD=pd(c0);if(parsedD){currentDate=parsedD;currentDay=c1||DAYS[new Date(parsedD+'T00:00:00').getDay()];}if(!currentDate){currentDate=new Date().toISOString().slice(0,10);currentDay=DAYS[new Date().getDay()];}const isLong=c2.toLowerCase().includes('long');const type=isLong?'Long-term':'Immediate';const priRaw=c6.toLowerCase();let priority=type==='Immediate'?'High':'Medium';if(priRaw.includes('critical'))priority='Critical';else if(priRaw.includes('high'))priority='High';else if(priRaw.includes('medium'))priority='Medium';else if(priRaw.includes('low'))priority='Low';const staRaw=c7.toLowerCase();let status='Open';if(staRaw.includes('done')||staRaw.includes('complete'))status='Done';else if(staRaw.includes('progress'))status='In Progress';else if(staRaw.includes('overdue'))status='Overdue';else if(staRaw.includes('defer'))status='Deferred';const text=c5.replace(/[\uf0b7\u2060\u2022\u25cf\u00b7]/g,'').replace(/^\s*[-\u2013\u2014]\s*/,'').trim();if(!text)continue;rawItems.push({date:currentDate,day:currentDay,type,campus:normCamp(c3),category:normCat(c4),text,priority,status,assignedTo:c8,timeline:pd(c9)||'',completed:status==='Done'});
+  }else{const c0=String(row[0]||'').trim(),c1=String(row[1]||'').trim(),c2=String(row[2]||'').trim(),c3=String(row[3]||'').trim(),c4=String(row[4]||'').trim(),c5=String(row[5]||'').trim();if(c0==='Type'&&c3==='Action Point & Notes')continue;const dm=c0.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);if(dm&&(c0.includes('📅')||c0.includes('—')||!c3||c0===c3)){const mo=MONTHS[dm[2].toLowerCase()];currentDate=`${dm[3]}-${mo}-${dm[1].padStart(2,'0')}`;const dM=c0.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i);currentDay=dM?dM[1]:DAYS[new Date(currentDate+'T00:00:00').getDay()];continue;}if(!currentDate){currentDate=new Date().toISOString().slice(0,10);currentDay=DAYS[new Date().getDay()];}if(!c3||c3===c0)continue;const isLong=c0.toLowerCase().includes('long')||c0.includes('📋');const type=isLong?'Long-term':'Immediate';const priRaw=c4.toLowerCase();let priority=type==='Immediate'?'High':'Medium';if(priRaw.includes('critical'))priority='Critical';else if(priRaw.includes('high'))priority='High';else if(priRaw.includes('low'))priority='Low';const staRaw=c5.toLowerCase();let status='Open';if(staRaw.includes('done')||staRaw.includes('complete'))status='Done';else if(staRaw.includes('progress'))status='In Progress';else if(staRaw.includes('overdue'))status='Overdue';else if(staRaw.includes('defer'))status='Deferred';const text=c3.replace(/[\uf0b7\u2060\u2022\u25cf\u00b7]/g,'').replace(/^\s*[-\u2013\u2014]\s*/,'').trim();if(!text)continue;rawItems.push({date:currentDate,day:currentDay,type,campus:normCamp(c1),category:normCat(c2),text,priority,status,assignedTo:'',timeline:'',completed:status==='Done'});}}
+  if(!rawItems.length)return[];
+  const fileTitle=(fileName||'').replace(/\.[^.]+$/,'').replace(/[_\-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase()).trim()||'Meeting Minutes';
+  const uniqueDates=[...new Set(rawItems.map(i=>i.date))];const isSingle=uniqueDates.length===1;
+  const groups={};for(const item of rawItems){const key=isSingle?item.date:`${item.date}||${item.category}`;if(!groups[key])groups[key]={date:item.date,day:item.day,campus:item.campus,category:isSingle?'Finance / Fee':item.category,title:isSingle?fileTitle:`Director Sir Follow-Up — ${item.category}`,items:[]};groups[key].items.push(item);}
+  return Object.values(groups).sort((a,b)=>a.date.localeCompare(b.date)).map((g,i)=>({date:g.date,day:g.day,title:g.title,campus:g.campus,category:g.category,actionPoints:g.items.map(it=>({type:it.type,text:isSingle&&it.category?`[${it.category}] ${it.text}`:it.text,priority:it.priority,status:it.status,assignedTo:it.assignedTo,timeline:it.timeline,completed:it.completed}))}));
+}
+
+function dlTemplate() {
+  if(typeof XLSX==='undefined'){tt('⚠ XLSX library not loaded');return;}
+  const wb=XLSX.utils.book_new();
+  const inst=[['VKP Director MOM System — Meeting Template'],[''],['INSTRUCTIONS:'],['1. Fill each row as one action point.'],['2. Type: Immediate or Long-term'],['3. Priority: Critical / High / Medium / Low'],['4. Status: Open / In Progress / Done / Overdue / Deferred'],['5. Save as .xlsx and Import.']];
+  const ws0=XLSX.utils.aoa_to_sheet(inst);ws0['!cols']=[{wch:80}];XLSX.utils.book_append_sheet(wb,ws0,'Instructions');
+  const headers=[['Date','Day','Type','Campus / School','Category / Agenda','Action Point & Notes','Priority','Status','Assigned To','Timeline / Deadline']];
+  const sampleRows=[['2026-04-30','Thursday','Immediate','All Campus','Academics','Grade 12 Practical Schedule — check with students.','High','Open','Principal','2026-04-30'],['2026-04-30','Thursday','Long-term','All Campus','Competition','Training Plan — Plan online sessions.','Medium','Open','Zonal Head','2026-05-15']];
+  const ws=XLSX.utils.aoa_to_sheet([...headers,...sampleRows]);ws['!cols']=[{wch:12},{wch:10},{wch:12},{wch:18},{wch:24},{wch:55},{wch:12},{wch:14},{wch:18},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Meeting Template');XLSX.writeFile(wb,'VKP_MOM_Template.xlsx');tt('✓ Template downloaded');
+}
+
+// ═══════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════
+function sv(n, btn) {
+  document.querySelectorAll('.vw').forEach(v => v.classList.remove('active'));
+  const vid = n==='entry'?'ve':n==='sum'?'vsum':n==='search'?'vs':n==='analytics'?'va':'vadmin';
+  document.getElementById(vid).classList.add('active');
+  document.querySelectorAll('.nt').forEach(t => t.classList.remove('active'));
+  if (btn?.classList) btn.classList.add('active');
+  if (n==='sum') rsum();
+  if (n==='analytics') ba();
+  if (n==='search') ds();
+  if (n==='admin') loadAdmin();
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function setToday() {
+  const t = new Date();
+  document.getElementById('fd').value = t.toISOString().slice(0,10);
+  ud();
+}
+function ud() {
+  const d = document.getElementById('fd').value;
+  if (!d) return;
+  document.getElementById('fday').value = DAYS[new Date(d+'T00:00:00').getDay()];
+}
+function occ() { const v=document.getElementById('fcamp').value; document.getElementById('ccw').style.display=v==='custom'?'block':'none'; as(); }
+function occat() { const v=document.getElementById('fcat').value; document.getElementById('catcw').style.display=v==='custom'?'block':'none'; as(); }
+function gc() { const v=document.getElementById('fcamp').value; return v==='custom'?(document.getElementById('fcc').value.trim()||'Unknown'):v; }
+function gcat() { const v=document.getElementById('fcat').value; return v==='custom'?(document.getElementById('fcatc').value.trim()||'Other'):v; }
+function sas(s) { const d=document.getElementById('asdot'),t=document.getElementById('astxt'); d.className='save-dot'; if(s==='saving'){d.classList.add('saving');t.textContent='Saving to cloud…';}else{d.classList.add('saved');t.textContent='Synced · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});} }
+function fdf(d) { if(!d)return'—'; try{const[y,m,dy]=d.split('-');const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return parseInt(dy)+' '+mn[parseInt(m)-1]+' '+y;}catch(e){return d;} }
+function eh(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function expCur() { if(!currentMeetingId){tt('No active meeting');return;} const m=meetings.find(x=>x.id===currentMeetingId); if(!m)return; const blob=new Blob([JSON.stringify({meeting:m,action_points:actionPoints[currentMeetingId]||[],follow_ups:Object.fromEntries((actionPoints[currentMeetingId]||[]).map(a=>[a.id,followUps[a.id]||[]]))},null,2)],{type:'application/json'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(m.title||'meeting').replace(/[^a-z0-9]/gi,'_')+'_'+m.date+'.json';a.click();URL.revokeObjectURL(a.href);tt('✓ Exported'); }
+function dd(title,sub,items){document.getElementById('drt').textContent=title;document.getElementById('drs').textContent=sub;document.getElementById('dri').innerHTML=items.length?items.slice(0,20).map(i=>`<div class="dric"><div class="drit">${eh(i.t||'—')}</div><div class="drim">${eh(i.s||'')}</div></div>`).join(''):'<div style="color:var(--slate);font-style:italic">No items.</div>';document.getElementById('dro').classList.add('show');}
+let tmt; function tt(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tmt);tmt=setTimeout(()=>t.classList.remove('show'),3500);}
+document.addEventListener('keyup', () => { if(document.getElementById('ve').classList.contains('active')) as(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape'){document.getElementById('dro').classList.remove('show');closeImp();}});
+</script>
+</body>
+</html>
